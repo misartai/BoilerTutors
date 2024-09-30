@@ -1,24 +1,48 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
 
-function App() {
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  Outlet,
+} from 'react-router-dom';
+import './App.css';
+import Home from './pages/Home';
+import DiscussionBoard from './pages/discussionBoard';
+
+function Layout() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <h1>Welcome to the App</h1>
+        {/* Navigation Links */}
+        <nav>
+          <Link to="/">Home</Link> |{' '}
+          <Link to="/discussion-board">Discussion Board</Link>
+        </nav>
       </header>
+      {/* Outlet renders the matched child route component */}
+      <div className="content">
+        <Outlet />
+      </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        {/* Parent route with a layout */}
+        <Route path="/" element={<Layout />}>
+          {/* Index route renders at the parent path */}
+          <Route index element={<Home />} />
+          {/* Child route */}
+          <Route path="discussion-board" element={<DiscussionBoard />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 }
 
