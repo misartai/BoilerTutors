@@ -10,6 +10,7 @@ import {
 import './App.css';
 import Home from './pages/Home';
 import DiscussionBoard from './pages/discussionBoard';
+import RateTutor from './pages/rateTutor.js';
 
 function Layout() {
   return (
@@ -19,7 +20,8 @@ function Layout() {
         {/* Navigation Links */}
         <nav>
           <Link to="/">Home</Link> |{' '}
-          <Link to="/discussion-board">Discussion Board</Link>
+          <Link to="/discussion-board">Discussion Board</Link>|{' '}
+          <Link to="/rate-tutor">Report Account</Link>
         </nav>
       </header>
       {/* Outlet renders the matched child route component */}
@@ -40,6 +42,7 @@ function App() {
           <Route index element={<Home />} />
           {/* Child route */}
           <Route path="discussion-board" element={<DiscussionBoard />} />
+          <Route path="rate-tutor" element={<RateTutor />} />
         </Route>
       </Routes>
     </Router>
