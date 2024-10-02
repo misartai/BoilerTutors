@@ -21,7 +21,7 @@ function Layout() {
         <nav>
           <Link to="/">Home</Link> |{' '}
           <Link to="/discussion-board">Discussion Board</Link>|{' '}
-          <Link to="/rate-tutor">Report Account</Link>
+          <Link to="/rate-tutor">Rate Tutor</Link>
         </nav>
       </header>
       {/* Outlet renders the matched child route component */}
