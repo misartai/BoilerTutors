@@ -4,54 +4,128 @@ import { useState, useEffect } from 'react';
 import { FaStar } from 'react-icons/fa'; 
 import './rateTutor.css';
 
-const RateTutor = () =>  {
-  const [rating, setRating] = useState(0); // track selected star
-  const [hover, setHover] = useState(null); // track hover star
-  const [showTextBox, setShowTextBox] = useState(false); // show text box
-  const [details, setDetails] = useState('');   
+const RateTutor = () => {
+  // Initialize reviews from localStorage
+  const [reviews, setReviews] = useState(() => {
+    const savedReviews = localStorage.getItem('reviews');
+    return savedReviews ? JSON.parse(savedReviews) : [];
+  });
 
-  const handleRating = (currentRating) => {
-    setRating(currentRating);
-    setShowTextBox(true);  // Show the text box after selecting a rating
+  const [newRating, setNewRating] = useState(0); // Star rating (1-5)
+  const [newReviewContent, setNewReviewContent] = useState('');
+
+  // Save reviews to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('reviews', JSON.stringify(reviews));
+  }, [reviews]);
+
+  // Handler for creating a new review
+  const handleSubmitReview = (e) => {
+    e.preventDefault();
+    if (newRating && newReviewContent) {
+      const newReview = {
+        rating: newRating,
+        content: newReviewContent,
+      };
+      setReviews([...reviews, newReview]);
+      setNewRating(0); // Reset rating
+      setNewReviewContent(''); // Reset review content
+    }
   };
+
+  // Handle star click
+  const handleStarClick = (starIndex) => {
+    setNewRating(starIndex + 1); // Sets the rating based on which star was clicked (1-5)
+  };
+
+  // Delete review
+  const handleDeleteReview = (indexToDelete) => {
+    const updatedReviews = reviews.filter((_, index) => index !== indexToDelete);
+    setReviews(updatedReviews);
+  };
+
+  // Calculate average rating
+  const averageRating = reviews.length
+    ? (reviews.reduce((sum, review) => sum + Number(review.rating), 0) / reviews.length).toFixed(1) // Ensure rating is treated as a number
+    : 0;
 
   return (
     <div>
-      <h1>Rate/Review Tutor</h1>
-      <div className="stars">
-        {[...Array(5)].map((star, index) => {
-          const currentRating = index + 1;
-          return (
-            <FaStar
-              key={index}
-              className="star"
-              color={currentRating <= (hover || rating) ? 'gold' : 'gray'}  // Turn stars gold on hover or click
-              size={40}
-              onClick={() => handleRating(currentRating)}  // Set rating when clicked
-              onMouseEnter={() => setHover(currentRating)}  // Track hover
-              onMouseLeave={() => setHover(null)}  // Reset hover
-              style={{ cursor: 'pointer' }}  // Make the star clickable
-            />
-          );
-        })}
-      </div>
-      <p>You have rated {rating} stars.</p>
+      <h1 className="web-name">Rate a Tutor</h1>
 
-      {/* Conditionally render the text box after a rating is selected */}
-      {showTextBox && (
-        <div className="details">
-          <h4 htmlFor="details">Please provide further details:</h4>
-          <textarea
-            id="details"
-            rows="4"
-            cols="50"
-            value={details}
-            onChange={(e) => setDetails(e.target.value)}  // Track input changes
-            placeholder="Write your review here..."
-          ></textarea>
-        </div>
+      <form onSubmit={handleSubmitReview}>
+        <h2>Submit Your Rating</h2>
+        <p>
+          <label>
+            Rating (out of 5):<br />
+            <div className="stars">
+              {[...Array(5)].map((_, index) => (
+                <FaStar
+                  key={index}
+                  size={30}
+                  className={index < newRating ? 'filled-star' : 'empty-star'}
+                  onClick={() => handleStarClick(index)}
+                />
+              ))}
+            </div>
+          </label>
+        </p>
+        <p>
+          <label>
+            Review:<br />
+            <textarea
+              value={newReviewContent}
+              onChange={(e) => setNewReviewContent(e.target.value)}
+              rows="5"
+              cols="40"
+              required
+            />
+          </label>
+        </p>
+        <p>
+          <button type="submit">Submit</button>
+        </p>
+      </form>
+
+      <hr />
+
+      <h2>Average Rating: {averageRating}/5</h2>
+      <div className="average-rating-stars">
+        {[...Array(5)].map((_, index) => (
+          <FaStar
+            key={index}
+            size={30}
+            className={index < Math.round(averageRating) ? 'filled-star' : 'empty-star'}
+          />
+        ))}
+      </div>
+
+      <hr />
+
+      <h2>Reviews</h2>
+      {reviews.length === 0 ? (
+        <p>No reviews yet.</p>
+      ) : (
+        reviews.map((review, index) => (
+          <div key={index}>
+            <div className="review-card">
+              <button className="delete-btn" onClick={() => handleDeleteReview(index)}>
+                &times; {/* Display X for delete */}
+              </button>
+              <h2>Rating: {review.rating}/5</h2>
+              <p>{review.content}</p>
+            </div>
+            <hr /> {/* Line separator between reviews */}
+          </div>
+        ))
       )}
     </div>
   );
-}
+};
+
+
+
+
+
+
 export default RateTutor;
