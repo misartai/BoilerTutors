@@ -1,0 +1,19 @@
+<dependencies>
+    <!-- Spring Boot Starter Web -->
+    <dependency>
+        <groupId> org.springframework.boot </groupId>
+        <artifactId> spring-boot-starter-web </artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Data MongoDB AKA Connection between HTML and Spring Boot -->
+    <dependency>
+        <groupId> org.springframework.boot </groupId>
+        <artifactId> spring-boot-starter-data-mongodb </artifactId>
+    </dependency>
+    
+    <!-- Spring Boot Starter Thymeleaf Connects to HTML Files-->
+    <dependency>
+        <groupId> org.springframework.boot </groupId>
+        <artifactId> spring-boot-starter-thymeleaf </artifactId>
+    </dependency>
+</dependencies>
