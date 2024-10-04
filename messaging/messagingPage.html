@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging Interface</title>
+    <style>
+        /* Basic Styling */
+        .container { display: flex; }
+        .contacts { width: 25%; padding: 10px; border-right: 1px solid #ccc; }
+        .messages { width: 75%; padding: 10px; }
+        .contact { cursor: pointer; padding: 5px; border-bottom: 1px solid #ccc; }
+        .message { margin: 10px 0; }
+        .input-field { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="contacts">
+            <h3>Contacts</h3>
+            <div id="contactList"></div>
+        </div>
+        <div class="messages">
+            <h3>Messages</h3>
+            <div id="messageList"></div>
+            <div class="input-field">
+                <textarea id="messageInput" placeholder="Type your message here..."></textarea>
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedContact = null;
+
+        // Fetch contacts for the current user
+        function fetchContacts() {
+            fetch('/api/messages/contacts/{userId}')
+                .then(response => response.json())
+                .then(contacts => {
+                    const contactList = document.getElementById('contactList');
+                    contacts.forEach(contact => {
+                        const div = document.createElement('div');
+                        div.classList.add('contact');
+                        div.textContent = contact.username;
+                        div.onclick = () => selectContact(contact);
+                        contactList.appendChild(div);
+                    });
+                });
+        }
+
+        // Fetch messages for the selected contact
+        function selectContact(contact) {
+            selectedContact = contact;
+            fetch(`/api/messages/${contact.userId}`)
+                .then(response => response.json())
+                .then(messages => {
+                    const messageList = document.getElementById('messageList');
+                    messageList.innerHTML = ''; // Clear previous messages
+                    messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.classList.add('message');
+                        div.textContent = msg.content;
+                        messageList.appendChild(div);
+                    });
+                });
+        }
+
+        // Send a new message
+        function sendMessage() {
+            const messageContent = document.getElementById('messageInput').value;
+            const message = {
+                sender: '{currentUserId}',
+                receiver: selectedContact.userId,
+                content: messageContent
+            };
+
+            fetch('/api/messages/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            }).then(response => response.text())
+              .then(result => {
+                  console.log(result);
+                  document.getElementById('messageInput').value = '';
+                  selectContact(selectedContact); // Refresh messages
+              });
+        }
+
+        // On page load, fetch contacts
+        window.onload = fetchContacts;
+    </script>
+</body>
+</html>
