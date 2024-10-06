@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import AppointmentModal from "./AppointmentModal";
+import AppointmentModal from "./AppointmentModel";
 
 const CalendarComponent = () => {
   const [appointments, setAppointments] = useState({});

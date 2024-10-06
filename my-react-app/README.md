@@ -14,6 +14,8 @@ Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
+**NOTE** if the website doesn't load it means its probably missing the router import, so after 'npm install' do 'npm install react-router-dom@6'
+
 ### `npm test`
 
 Launches the test runner in the interactive watch mode.\
