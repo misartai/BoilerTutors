@@ -11,6 +11,7 @@ import './App.css';
 import Home from './pages/Home';
 import DiscussionBoard from './pages/discussionBoard';
 import RateTutor from './pages/rateTutor.js';
+import Calendar from './pages/CalendarComponent'
 
 function Layout() {
   return (
@@ -22,6 +23,7 @@ function Layout() {
           <Link to="/">Home</Link> |{' '}
           <Link to="/discussion-board">Discussion Board</Link>|{' '}
           <Link to="/rate-tutor">Rate Tutor</Link>
+          <Link to="/calendar">Calendars</Link>
         </nav>
       </header>
       {/* Outlet renders the matched child route component */}
@@ -43,6 +45,7 @@ function App() {
           {/* Child route */}
           <Route path="discussion-board" element={<DiscussionBoard />} />
           <Route path="rate-tutor" element={<RateTutor />} />
+          <Route path="calendar" element={<Calendar />} />
         </Route>
       </Routes>
     </Router>
