@@ -2,7 +2,7 @@
 import java.time.LocalDateTime;
 
 class Message {
-
+    //sets up Message class which will be used in conjunction with components from user DB
     private String message_content;
     private String recipient;
     private String sender;
@@ -11,10 +11,10 @@ class Message {
     public Message
 
     {
-        this.message_content = message_content;
+        this.messageContent = messageContent;
         this.sender = sender;
         this.recipient = recipient;
-        this.time_sent = LocalDateTime.now();
+        this.timeSent = LocalDateTime.now();
     }
 
     public String getSender() {
@@ -26,14 +26,14 @@ class Message {
     }
 
     public String getMessageContent() {
-        return message_content;
+        return messageContent;
     }
 
     public LocalDateTime getTimeSent() {
-        return time_sent;
+        return timeSent;
     }
 
     public toString() {
-        return "From: " + sender + "\n To: " + recipient + "\n Content: " + message_content + "\n Time Sent: " + time_sent.toString();
+        return "From: " + sender + "\n To: " + recipient + "\n Content: " + messageContent + "\n Time Sent: " + timeSent.toString();
     }
 }
