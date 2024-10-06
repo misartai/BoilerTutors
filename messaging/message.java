@@ -1,12 +1,16 @@
+
 import java.time.LocalDateTime;
 
 class Message {
+
     private String message_content;
     private String recipient;
     private String sender;
     private LocalDateTime time_sent;
 
-    public Message {
+    public Message
+
+    {
         this.message_content = message_content;
         this.sender = sender;
         this.recipient = recipient;
@@ -16,7 +20,7 @@ class Message {
     public String getSender() {
         return sender;
     }
-    
+
     public String getRecipient() {
         return recipient;
     }

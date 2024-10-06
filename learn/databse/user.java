@@ -1,6 +1,7 @@
-class User {
-    /* This defines the User class, which has two main children, staff and students. These children classes extend this class */
 
+class User {
+
+    /* This defines the User class, which has two main children, staff and students. These children classes extend this class */
     private String firstName;
     private String lastName;
     private String purdueEmail;
@@ -9,7 +10,7 @@ class User {
     private boolean eventNotif;
     private boolean generalNotifs;
 
-    public User {
+    public User() {
         this.firstName = firstName;
         this.lastName = lastName;
         this.purdueEmail = purdueEmail;
@@ -26,7 +27,7 @@ class User {
     public String getLastName() {
         return lastName;
     }
-    
+
     public String getProfilePictureDIR() {
         return profilePictureDIR;
     }
@@ -38,7 +39,7 @@ class User {
     public boolean getEventNotifs() {
         return eventNotif;
     }
-    
+
     public boolean getGeneralNotifs() {
         return generalNotifs;
     }

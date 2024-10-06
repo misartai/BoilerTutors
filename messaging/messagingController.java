@@ -1,4 +1,6 @@
+
 public class MessageController {
+
     private messageService messageService;
 
     public List<Message> getMessagesForUser(String userID) {
