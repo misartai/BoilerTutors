@@ -1,5 +1,8 @@
+import java.time.LocalDateTime;
 public class MessageController {
+
     private messageService messageService;
+    private LocalDateTime timestamp = LocalDateTime.now();
 
     public List<Message> getMessagesForUser(String userID) {
         return messageService.getMessagesByUserID(userID);
@@ -11,6 +14,6 @@ public class MessageController {
 
     public String sendMessage(Message message) {
         messageService.sendMessage(message);
-        return "Sent Successfully";
+        return "Sent Successfully" + timestamp.toString();
     }
 }

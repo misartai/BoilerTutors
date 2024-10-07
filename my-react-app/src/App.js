@@ -22,7 +22,7 @@ function Layout() {
         <nav>
           <Link to="/">Home</Link> |{' '}
           <Link to="/discussion-board">Discussion Board</Link>|{' '}
-          <Link to="/rate-tutor">Rate Tutor</Link>
+          <Link to="/rate-tutor">Rate Tutor</Link>|{' '}
           <Link to="/calendar">Calendars</Link>
         </nav>
       </header>

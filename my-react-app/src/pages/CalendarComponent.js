@@ -1,73 +1,64 @@
-import React, { useState } from "react";
-import AppointmentModal from "./AppointmentModel";
+import React, { Component } from 'react';
+import CalendarDays from './CalendarDays';
+import './Calendar.css'
 
-const CalendarComponent = () => {
-  const [appointments, setAppointments] = useState({});
-  const [selectedSlot, setSelectedSlot] = useState(null);
+export default class Calendar extends Component {
+  constructor() {
+    super();
 
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const slots = [
-    { day: "Monday", time: "11:30am", label: "Appointment" },
-    { day: "Tuesday", time: "1pm-5pm", label: "Office Hours CS 100" },
-    { day: "Wednesday", time: "1pm-5pm", label: "Office Hours CS 100" },
-    { day: "Thursday", time: "1pm-5pm", label: "Office Hours CS 100" },
-    { day: "Friday", time: "1pm-5pm", label: "Office Hours CS 100" },
-    { day: "Wednesday", time: "ECON 100", label: "Study Session" },
-    { day: "Thursday", time: "ECON 100", label: "Study Session" }
-  ];
+    this.weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    this.months = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
 
-  const handleSlotClick = (day, time) => {
-    setSelectedSlot({ day, time });
-  };
+    this.state = {
+      currentDay: new Date()
+    }
+  }
 
-  const addAppointment = (name) => {
-    setAppointments((prev) => ({
-      ...prev,
-      [selectedSlot.day + selectedSlot.time]: name
-    }));
-    setSelectedSlot(null);
-  };
+  changeCurrentDay = (day) => {
+    this.setState({ currentDay: new Date(day.year, day.month, day.number) });
+  }
 
-  return (
-    <div className="calendar">
-      <table>
-        <thead>
-          <tr>
-            {days.map((day) => (
-              <th key={day}>{day}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {days.map((day) => (
-              <td key={day}>
-                {slots
-                  .filter((slot) => slot.day === day)
-                  .map((slot) => (
-                    <div key={slot.time} className="slot" onClick={() => handleSlotClick(day, slot.time)}>
-                      {appointments[day + slot.time] ? (
-                        <div>{appointments[day + slot.time]}</div>
-                      ) : (
-                        <div>{slot.label}</div>
-                      )}
-                    </div>
-                  ))}
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+  nextDay = () => {
+    this.setState({ currentDay: new Date(this.state.currentDay.setDate(this.state.currentDay.getDate() + 1)) });
+  }
 
-      {selectedSlot && (
-        <AppointmentModal
-          slot={selectedSlot}
-          onClose={() => setSelectedSlot(null)}
-          onSave={addAppointment}
-        />
-      )}
-    </div>
-  );
-};
+  previousDay = () => {
+    this.setState({ currentDay: new Date(this.state.currentDay.setDate(this.state.currentDay.getDate() - 1)) });
+  }
 
-export default CalendarComponent;
+  render() {
+    return (
+      <div className="calendar">
+        <div className="calendar-header">
+          <div className="title">
+            <h2>{this.months[this.state.currentDay.getMonth()]} {this.state.currentDay.getFullYear()}</h2>
+          </div>
+          <div className="tools">
+            <button onClick={this.previousDay}>
+              <span className="material-icons">
+                arrow_back
+                </span>
+            </button>
+            <p>{this.months[this.state.currentDay.getMonth()].substring(0, 3)} {this.state.currentDay.getDate()}</p>
+            <button onClick={this.nextDay}>
+              <span className="material-icons">
+                arrow_forward
+                </span>
+            </button>
+          </div>
+        </div>
+        <div className="calendar-body">
+          <div className="table-header">
+            {
+              this.weekdays.map((weekday) => {
+                return <div className="weekday"><p>{weekday}</p></div>
+              })
+            }
+          </div>
+          <CalendarDays day={this.state.currentDay} changeCurrentDay={this.changeCurrentDay} />
+        </div>
+      </div>
+    )
+  }
+}
