@@ -16,9 +16,9 @@
 }
 
 .App-header {
-  background-color: #1b90b3;
-  /* min-height: 100vh; */ /* Commented out */
-  padding: 20px; /* Added padding */
+  background-color: #e6c069;
+  /* min-height: 100vh; */ /* Ensure this is commented out or removed */
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,5 +43,5 @@
 /* Ensure the content area doesn't inherit unwanted styles */
 .content {
   padding: 20px;
-  background-color: #f9f9f9; /* Optional: Set a background to differentiate */
+  background-color: #000000;
 }
