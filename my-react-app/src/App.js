@@ -14,6 +14,9 @@ import RateTutor from './pages/rateTutor.js';
 import Calendar from './pages/CalendarComponent'
 import Login from './pages/login.js'
 import Signup from './pages/signup.js'
+import ReportAccount from './pages/reportAccount.js'
+import ConfirmPayment from './pages/confirmPayment.js'
+import ReportDetails from './pages/reportDetails.js'
 
 function Layout() {
   return (
@@ -27,7 +30,9 @@ function Layout() {
           <Link to="/rate-tutor">Rate Tutor</Link>{' '}|{' '}
           <Link to="/calendar">Calendars</Link>{' '}|{' '}
           <Link to="/login">Login</Link>{' '}|{' '}
-          <Link to="/signup">SignUp</Link>
+          <Link to="/signup">SignUp</Link>{' '}|{' '}
+          <Link to="/report-account">Report Account</Link>{' '}|{' '}
+          <Link to="/confirm-payment">Confirm Payment</Link>
         </nav>
       </header>
       {/* Outlet renders the matched child route component */}
@@ -52,6 +57,10 @@ function App() {
           <Route path="calendar" element={<Calendar />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
+          <Route path="report-account" element={<ReportAccount />} />
+          <Route path="report-account/:trackingId" element={<ReportDetails />} />  {/* Route to details */}
+          <Route path="confirm-payment" element={<ConfirmPayment />} />
+          
         </Route>
       </Routes>
     </Router>
