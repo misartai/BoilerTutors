@@ -6,12 +6,21 @@
 
 /* main container style */
 .container {
-    width: 75%;
+    width: 73%;
     margin: auto;
     margin-top: 2rem;
     letter-spacing: 0.5px;
     height: 80%;
     float: right;
+}
+
+.container3 {
+    width: 25%;
+    margin: auto;
+    margin-top: 2rem;
+    letter-spacing: 0.5px;
+    height: 80%;
+    float: left;
 }
 
 img {
@@ -55,10 +64,10 @@ img {
     font-weight: bold;
     margin: 0 0 0 5px;
     height: 10%;
-    font-style: italic;
 
 }
 
+/* Styling the inbox */
 .chat-page {
     padding: 0 0 50px 0;
 }
@@ -80,15 +89,14 @@ img {
     overflow-y: auto;
 }
 
-/* styling the msg-bottom container */
+/* Styling the msg-bottom container */
  .msg-bottom {
         border-top: 1px solid #ccc;
         position: relative;
         height: 11%;
         background-color: rgb(239 239 239);
     }
-
-/* style for textbox to send new message */
+/* Styling the input field */
     .input-group {
         float: right;
         margin-top: 13px;
@@ -154,7 +162,7 @@ img {
         font-weight: bold !important;
     }
 
-/* small profile picture icons near messages */
+/* Styling the avatar in chat  */
 received-chats-img {
     display: inline-block;
     width: 50px;
@@ -191,9 +199,7 @@ received-chats-img {
     display: block;
     font-size: 12px;
     margin: 8px 0 0;
-    font-style: italics;
 }
-
 .outgoing-chats {
     overflow: hidden;
     margin: 26px 20px;
@@ -210,7 +216,6 @@ received-chats-img {
     padding: 1rem;
     box-shadow: rgb(0 0 0 / 25%) 0px 2px 5px 2px;
 }
-
 .outgoing-chats-msg {
         float: right;
         width: 46%;
@@ -223,7 +228,6 @@ received-chats-img {
     float: right;
     margin-right: 1rem;
 }
-
 @media only screen and (max-device-width: 850px) {
     *,
     .time {
