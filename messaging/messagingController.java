@@ -14,6 +14,6 @@ public class MessageController {
 
     public String sendMessage(Message message) {
         messageService.sendMessage(message);
-        return "Sent Successfully" + timestamp.toString();
+        return "Sent Successfully at: " + timestamp.toString();
     }
 }

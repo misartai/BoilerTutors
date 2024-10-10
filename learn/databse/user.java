@@ -1,9 +1,13 @@
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document(collection = "users")
 class User {
 
     /* This defines the User class, which has two main children, staff and students. These children classes extend this class */
     private String firstName;
     private String lastName;
+    @Id
     private String purdueEmail;
     private String profilePictureDIR;
     private String password;

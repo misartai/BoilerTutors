@@ -124,8 +124,4 @@ const RateTutor = () => {
 };
 
 
-
-
-
-
 export default RateTutor;
