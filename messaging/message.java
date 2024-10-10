@@ -7,6 +7,7 @@ class Message {
     private String recipient;
     private String sender;
     private LocalDateTime time_sent;
+    private boolean isAnnouncement;
 
     public Message
 
@@ -15,6 +16,7 @@ class Message {
         this.sender = sender;
         this.recipient = recipient;
         this.timeSent = LocalDateTime.now();
+        this.isAnnouncement = isAnnouncement;
     }
 
     public String getSender() {
@@ -31,6 +33,10 @@ class Message {
 
     public LocalDateTime getTimeSent() {
         return timeSent;
+    }
+
+    public boolean getAnnouncementStatus() {
+        return isAnnouncement;
     }
 
     public toString() {
