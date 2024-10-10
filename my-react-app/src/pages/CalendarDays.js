@@ -53,7 +53,7 @@ export default function MyCalendar() {
 
     while (currentTime <= endTime) {
       intervals.push(currentTime.toTimeString().substring(0, 5));
-      currentTime.setMinutes(currentTime.getMinutes() + 60); // Changed to 60 minutes for 1-hour slots
+      currentTime.setMinutes(currentTime.getMinutes() + 60); 
     }
 
     return intervals;
@@ -95,7 +95,7 @@ export default function MyCalendar() {
           selectable={true}
           events={events}
           dateClick={handleDateClick}
-          displayEventTime={false}  // Added to hide the time next to event titles
+          displayEventTime={false}  
         />
       </div>
 
