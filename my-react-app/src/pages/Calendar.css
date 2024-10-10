@@ -45,3 +45,12 @@
   border-radius: 5px;
   cursor: pointer;
 }
+
+.fc-event {
+  white-space: normal; 
+  word-wrap: break-word; 
+}
+
+.fc-title {
+  font-size: 14px; 
+}
