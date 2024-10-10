@@ -60,7 +60,7 @@ function App() {
           <Route path="report-account" element={<ReportAccount />} />
           <Route path="report-account/:trackingId" element={<ReportDetails />} /> 
           <Route path="confirm-payment" element={<ConfirmPayment />} />
-          
+          <Route path="messaging" element={<Messaging/>} />
         </Route>
       </Routes>
     </Router>
