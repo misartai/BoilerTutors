@@ -19,6 +19,7 @@ import Signup from './pages/signup.js'
 import ReportAccount from './pages/reportAccount.js'
 import ConfirmPayment from './pages/confirmPayment.js'
 import ReportDetails from './pages/reportDetails.js'
+import Messaging from './pages/messaging/messaging.js'
 import axios from 'axios';
 
 function Layout() {
@@ -35,7 +36,7 @@ function Layout() {
           <Link to="/signup">SignUp</Link>{' '}|{' '}
           <Link to="/report-account">Report Account</Link>{' '}|{' '}
           <Link to="/confirm-payment">Confirm Payment</Link>{' '}|{' '}
-          <Link to="/messaging">Messaging</Link>
+          <Link to="/messaging">Messaging </Link>
         </nav>
       </header>
       <div className="content">
