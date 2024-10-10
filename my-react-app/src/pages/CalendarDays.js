@@ -10,8 +10,8 @@ export default function MyCalendar() {
   const [formData, setFormData] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
-    startTime: '09:00',
-    endTime: '10:00',
+    startTime: '',
+    endTime: '',
   });
 
   const handleDateClick = (info) => {
@@ -41,8 +41,8 @@ export default function MyCalendar() {
     setFormData({
       title: '',
       date: formData.date,
-      startTime: '09:00',
-      endTime: '10:00',
+      startTime: '',
+      endTime: '',
     });
   };
 
@@ -53,7 +53,7 @@ export default function MyCalendar() {
 
     while (currentTime <= endTime) {
       intervals.push(currentTime.toTimeString().substring(0, 5));
-      currentTime.setMinutes(currentTime.getMinutes() + 30);
+      currentTime.setMinutes(currentTime.getMinutes() + 60); // Changed to 60 minutes for 1-hour slots
     }
 
     return intervals;
@@ -95,7 +95,7 @@ export default function MyCalendar() {
           selectable={true}
           events={events}
           dateClick={handleDateClick}
-          displayEventTime={false}  // Hide time from the side of events
+          displayEventTime={false}  // Added to hide the time next to event titles
         />
       </div>
 
@@ -130,6 +130,7 @@ export default function MyCalendar() {
               onChange={handleInputChange}
               required
             >
+              <option value="">Select Start Time</option>
               {availableStartTimes.map((time) => (
                 <option key={time} value={time}>
                   {time}
@@ -145,6 +146,7 @@ export default function MyCalendar() {
               onChange={handleInputChange}
               required
             >
+              <option value="">Select End Time</option>
               {availableEndTimes.map((time) => (
                 <option key={time} value={time}>
                   {time}
