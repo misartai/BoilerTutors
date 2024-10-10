@@ -22,9 +22,7 @@ const MessagePage = () => {
                   </div>
                 </div>
               </div>
-              <!-- msg-header section ends -->
 
-              <!-- Chat inbox  -->
               <div class="chat-page">
                 <div class="msg-inbox">
                   <div class="chats">
@@ -33,14 +31,10 @@ const MessagePage = () => {
 
                     </div>
                   </div>
-
-                  <!-- msg-bottom section -->
-
                 </div>
               </div>
             </div>
 
-            <!-- message pane container -->
             <div class="container">
               <!-- msg-header section starts -->
               <div class="msg-header">
@@ -51,16 +45,11 @@ const MessagePage = () => {
                   </div>
                 </div>
               </div>
-              <!-- msg-header section ends -->
 
-              <!-- Chat inbox  -->
               <div class="chat-page">
                 <div class="msg-inbox">
                   <div class="chats">
-                    <!-- Message container -->
                     <div class="msg-page">
-                      <!-- Incoming messages -->
-
                       <div class="received-chats">
                         <div class="received-chats-img">
                           <img src="user2.png" />
@@ -78,7 +67,6 @@ const MessagePage = () => {
                           </div>
                         </div>
                       </div>
-                      <!-- Outgoing messages -->
                       <div class="outgoing-chats">
                         <div class="outgoing-chats-img">
                           <img src="user1.png" />
@@ -130,8 +118,6 @@ const MessagePage = () => {
                       </div>
                     </div>
                   </div>
-
-                  <!-- msg-bottom section -->
 
                   <div class="msg-bottom">
                     <div class="input-group">
