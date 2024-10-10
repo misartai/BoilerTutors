@@ -19,8 +19,8 @@ import Signup from './pages/signup.js'
 import ReportAccount from './pages/reportAccount.js'
 import ConfirmPayment from './pages/confirmPayment.js'
 import ReportDetails from './pages/reportDetails.js'
-import Messaging from './pages/messaging/messaging.js'
-import axios from 'axios';
+import Messaging from './pages/messaging.js'
+//import axios from 'axios';
 
 function Layout() {
   return (

@@ -2,6 +2,7 @@ import React from 'react';
 
 const MessagePage = () => {
     return (
+        <>
             <div class="msg-header">
               <div class="container1">
                 <img src="logo.png"/>
@@ -34,8 +35,6 @@ const MessagePage = () => {
                   </div>
 
                   <!-- msg-bottom section -->
-
-
 
                 </div>
               </div>
@@ -143,10 +142,10 @@ const MessagePage = () => {
                       </span>
                     </div>
                   </div>
-
                 </div>
               </div>
             </div>
+        </>
     );
 
     let selectedContact = null;
@@ -208,3 +207,5 @@ const MessagePage = () => {
     // On page load, fetch contacts
     window.onload = fetchContacts;
 };
+
+export default MessagePage;
