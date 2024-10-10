@@ -1,43 +1,109 @@
-function CalendarDays(props) {
-  const firstDayOfMonth = new Date(props.day.getFullYear(), props.day.getMonth(), 1);
-  const weekdayOfFirstDay = firstDayOfMonth.getDay();
-  let currentDays = [];
+import React, { useState } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import './Calendar.css';
 
-  for (let day = 0; day < 42; day++) {
-    if (day === 0 && weekdayOfFirstDay === 0) {
-      firstDayOfMonth.setDate(firstDayOfMonth.getDate() - 7);
-    } else if (day === 0) {
-      firstDayOfMonth.setDate(firstDayOfMonth.getDate() + (day - weekdayOfFirstDay));
-    } else {
-      firstDayOfMonth.setDate(firstDayOfMonth.getDate() + 1);
-    }
+export default function MyCalendar() {
+  const [events, setEvents] = useState([]);
+  const [formData, setFormData] = useState({
+    title: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '',
+    endTime: '',
+  });
 
-    let calendarDay = {
-      currentMonth: (firstDayOfMonth.getMonth() === props.day.getMonth()),
-      date: (new Date(firstDayOfMonth)),
-      month: firstDayOfMonth.getMonth(),
-      number: firstDayOfMonth.getDate(),
-      selected: (firstDayOfMonth.toDateString() === props.day.toDateString()),
-      year: firstDayOfMonth.getFullYear()
-    }
+  const handleDateClick = (info) => {
+    setFormData({
+      ...formData,
+      date: info.dateStr,
+    });
+  };
 
-    currentDays.push(calendarDay);
-  }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newEvent = {
+      title: formData.title,
+      start: `${formData.date}T${formData.startTime}`,
+      end: `${formData.date}T${formData.endTime}`,
+    };
+
+    setEvents([...events, newEvent]);
+    setFormData({
+      title: '',
+      date: formData.date,
+      startTime: '',
+      endTime: '',
+    });
+  };
 
   return (
-    <div className="table-content">
-      {
-        currentDays.map((day) => {
-          return (
-            <div className={"calendar-day" + (day.currentMonth ? " current" : "") + (day.selected ? " selected" : "")}
-                  onClick={() => props.changeCurrentDay(day)}>
-              <p>{day.number}</p>
-            </div>
-          )
-        })
-      }
-    </div>
-  )
-}
+    <div className="calendar-container">
+      <div className="calendar">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          selectable={true}
+          events={events}
+          dateClick={handleDateClick}
+        />
+      </div>
 
-export default CalendarDays;
+      <div className="booking-form">
+        <h2>Book an Appointment</h2>
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label>Title:</label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label>Date:</label>
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label>Start Time:</label>
+            <input
+              type="time"
+              name="startTime"
+              value={formData.startTime}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label>End Time:</label>
+            <input
+              type="time"
+              name="endTime"
+              value={formData.endTime}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <button type="submit">Book Appointment</button>
+        </form>
+      </div>
+    </div>
+  );
+}
