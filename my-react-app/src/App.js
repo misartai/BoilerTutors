@@ -14,13 +14,13 @@ import './App.css';
 import Home from './pages/Home';
 import DiscussionBoard from './pages/discussionBoard';
 import RateTutor from './pages/rateTutor.js';
-import Calendar from './pages/CalendarDays.js'
-import Login from './pages/login.js'
-import Signup from './pages/signup.js'
-import ReportAccount from './pages/reportAccount.js'
-import ConfirmPayment from './pages/confirmPayment.js'
-import ReportDetails from './pages/reportDetails.js'
-import Messaging from './pages/messaging.js'
+import Calendar from './pages/CalendarDays.js';
+import Login from './pages/login.js';
+import Signup from './pages/signup.js';
+import ReportAccount from './pages/reportAccount.js';
+import ConfirmPayment from './pages/confirmPayment.js';
+import ReportDetails from './pages/reportDetails.js';
+import Messaging from './pages/messaging.js';
 
 function Layout() {
   return (
