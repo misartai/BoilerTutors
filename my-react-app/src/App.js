@@ -5,6 +5,10 @@ import {
   Link,
   Outlet,
 } from 'react-router-dom';
+import {
+        useEffect,
+        useState
+} from 'react';
 import './App.css';
 import Home from './pages/Home';
 import DiscussionBoard from './pages/discussionBoard';
@@ -15,6 +19,7 @@ import Signup from './pages/signup.js'
 import ReportAccount from './pages/reportAccount.js'
 import ConfirmPayment from './pages/confirmPayment.js'
 import ReportDetails from './pages/reportDetails.js'
+import axios from 'axios';
 
 function Layout() {
   return (
@@ -29,7 +34,8 @@ function Layout() {
           <Link to="/login">Login</Link>{' '}|{' '}
           <Link to="/signup">SignUp</Link>{' '}|{' '}
           <Link to="/report-account">Report Account</Link>{' '}|{' '}
-          <Link to="/confirm-payment">Confirm Payment</Link>
+          <Link to="/confirm-payment">Confirm Payment</Link>{' '}|{' '}
+          <Link to="/messaging">Messaging</Link>
         </nav>
       </header>
       <div className="content">
@@ -59,5 +65,36 @@ function App() {
     </Router>
   );
 }
+
+const Conversation = ({ senderId, receiverId }) => {
+    const [messages, setMessages] = useState([]);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/messages/conversation', {
+                    params: {
+                        senderId,
+                        receiverId
+                    }
+                });
+                setMessages(response.data);
+            } catch (error) {
+                console.error('Error fetching conversation:', error);
+            }
+        };
+
+        fetchMessages();
+    }, [senderId, receiverId]);
+
+    return (
+        <div>
+            {messages.map((message) => (
+                <p key={message.id}>{message.content}</p>
+            ))}
+        </div>
+    );
+};
+
 
 export default App;

@@ -139,12 +139,8 @@
 
           <div class="msg-bottom">
             <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Draft Message here..."
-              />
-
+              <textarea id="messageInput" placeholder="Type your message here..."></textarea>
+              <button onclick="sendMessage()">Send</button>
               <span class="input-group-text send-icon">
                 <i class="bi bi-send"></i>
               </span>
@@ -154,6 +150,66 @@
         </div>
       </div>
     </div>
-    
+
+    <script>
+        let selectedContact = null;
+
+        // Fetch contacts for the current user
+        function fetchContacts() {
+            fetch('/api/messages/contacts/{userId}')
+                .then(response => response.json())
+                .then(contacts => {
+                    const contactList = document.getElementById('contactList');
+                    contacts.forEach(contact => {
+                        const div = document.createElement('div');
+                        div.classList.add('contact');
+                        div.textContent = contact.username;
+                        div.onclick = () => selectContact(contact);
+                        contactList.appendChild(div);
+                    });
+                });
+        }
+
+        // Fetch messages for the selected contact
+        function selectContact(contact) {
+            selectedContact = contact;
+            fetch(`/api/messages/${contact.userId}`)
+                .then(response => response.json())
+                .then(messages => {
+                    const messageList = document.getElementById('messageList');
+                    messageList.innerHTML = ''; // Clear previous messages
+                    messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.classList.add('message');
+                        div.textContent = msg.content;
+                        messageList.appendChild(div);
+                    });
+                });
+        }
+
+        // Send a new message
+        function sendMessage() {
+            const messageContent = document.getElementById('messageInput').value;
+            const message = {
+                sender: '{currentUserId}',
+                receiver: selectedContact.userId,
+                content: messageContent
+            };
+
+            fetch('/api/messages/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(message)
+            }).then(response => response.text())
+              .then(result => {
+                  console.log(result);
+                  document.getElementById('messageInput').value = '';
+                  selectContact(selectedContact); // Refresh messages
+              });
+        }
+
+        // On page load, fetch contacts
+        window.onload = fetchContacts;
+    </script>
   </body>
 </html>
