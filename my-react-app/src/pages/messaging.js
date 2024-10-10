@@ -13,7 +13,6 @@ const MessagePage = () => {
             </div>
 
             <div class="container3">
-              <!-- msg-header section starts -->
               <div class="msg-header">
                 <div class="container1">
                   <img src="user1.png" class="msgimg" />
@@ -26,7 +25,6 @@ const MessagePage = () => {
               <div class="chat-page">
                 <div class="msg-inbox">
                   <div class="chats">
-                    <!-- Message container -->
                     <div class="msg-page">
 
                     </div>
@@ -36,7 +34,6 @@ const MessagePage = () => {
             </div>
 
             <div class="container">
-              <!-- msg-header section starts -->
               <div class="msg-header">
                 <div class="container1">
                   <img src="user1.png" class="msgimg" />

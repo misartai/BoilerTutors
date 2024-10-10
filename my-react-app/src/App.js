@@ -9,6 +9,7 @@ import {
         useEffect,
         useState
 } from 'react';
+import axios from 'axios';
 import './App.css';
 import Home from './pages/Home';
 import DiscussionBoard from './pages/discussionBoard';
@@ -20,7 +21,6 @@ import ReportAccount from './pages/reportAccount.js'
 import ConfirmPayment from './pages/confirmPayment.js'
 import ReportDetails from './pages/reportDetails.js'
 import Messaging from './pages/messaging.js'
-//import axios from 'axios';
 
 function Layout() {
   return (
