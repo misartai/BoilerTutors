@@ -1,5 +1,3 @@
-// src/pages/Post.js
-
 import React, { useState } from 'react';
 
 const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAddReply }) => {
@@ -9,20 +7,20 @@ const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAdd
   const [replyContent, setReplyContent] = useState('');
   const [showReplyForm, setShowReplyForm] = useState(false);
 
-  // Ensure 'replies' is an array
-  const replies = post.replies || [];
-
   // Save edited post
-  const saveEdit = () => {
-    handleEditPost(post.id, updatedTitle, updatedContent);
+  const saveEdit = async () => {
+    await handleEditPost(post._id, updatedTitle, updatedContent);
     setIsEditing(false);
   };
 
   // Add reply to post
-  const submitReply = () => {
-    handleAddReply(post.id, replyContent);
-    setReplyContent('');
-    setShowReplyForm(false);
+  const submitReply = async (e) => {
+    e.preventDefault();
+    if (replyContent.trim() !== '') {
+      await handleAddReply(post._id, replyContent);
+      setReplyContent('');
+      setShowReplyForm(false);
+    }
   };
 
   return (
@@ -51,10 +49,10 @@ const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAdd
             <button onClick={() => setShowReplyForm(!showReplyForm)}>
               {showReplyForm ? 'Cancel Reply' : 'Reply'}
             </button>
-            {post.userId === currentUserId && (
+            {post.author === currentUserId && (
               <>
                 <button onClick={() => setIsEditing(true)}>Edit</button>
-                <button onClick={() => handleDeletePost(post.id)}>Delete</button>
+                <button onClick={() => handleDeletePost(post._id)}>Delete</button>
               </>
             )}
           </div>
@@ -71,12 +69,12 @@ const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAdd
             </div>
           )}
           {/* Replies */}
-          {replies.length > 0 && (
+          {post.replies && post.replies.length > 0 && (
             <div className="replies">
               <h3>Replies:</h3>
-              {replies.map((reply, index) => (
+              {post.replies.map((reply, index) => (
                 <div key={index} className="reply">
-                  <p>{reply.content}</p>
+                  <p><strong>{reply.author}:</strong> {reply.content}</p>
                 </div>
               ))}
             </div>

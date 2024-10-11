@@ -1,5 +1,3 @@
-// src/App.js
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -7,24 +5,40 @@ import {
   Link,
   Outlet,
 } from 'react-router-dom';
+import {
+        useEffect,
+        useState
+} from 'react';
+import axios from 'axios';
 import './App.css';
 import Home from './pages/Home';
 import DiscussionBoard from './pages/discussionBoard';
-import RateTutor from './pages/rateTutor'; 
+import RateTutor from './pages/rateTutor.js';
+import Calendar from './pages/CalendarDays.js';
+import Login from './pages/login.js';
+import Signup from './pages/signup.js';
+import ReportAccount from './pages/reportAccount.js';
+import ConfirmPayment from './pages/confirmPayment.js';
+import ReportDetails from './pages/reportDetails.js';
+import Messaging from './pages/messaging.js';
 
 function Layout() {
   return (
     <div className="App">
       <header className="App-header">
         <h1>Welcome to the App</h1>
-        {/* Navigation Links */}
         <nav>
-          <Link to="/">Home</Link> |{' '}
-          <Link to="/discussion-board">Discussion Board</Link>
-          |{' '}<Link to="/rate-tutor">Rate Tutor</Link> */
+          <Link to="/">Home</Link>{' '}|{' '}
+          <Link to="/discussion-board">Discussion Board</Link>{' '}|{' '}
+          <Link to="/rate-tutor">Rate Tutor</Link>{' '}|{' '}
+          <Link to="/calendar">Calendars</Link>{' '}|{' '}
+          <Link to="/login">Login</Link>{' '}|{' '}
+          <Link to="/signup">SignUp</Link>{' '}|{' '}
+          <Link to="/report-account">Report Account</Link>{' '}|{' '}
+          <Link to="/confirm-payment">Confirm Payment</Link>{' '}|{' '}
+          <Link to="/messaging">Messaging </Link>
         </nav>
       </header>
-      {/* Outlet renders the matched child route component */}
       <div className="content">
         <Outlet />
       </div>
@@ -36,17 +50,52 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Parent route with a layout */}
         <Route path="/" element={<Layout />}>
-          {/* Index route renders at the parent path */}
           <Route index element={<Home />} />
-          {/* Child routes */}
           <Route path="discussion-board" element={<DiscussionBoard />} />
           <Route path="rate-tutor" element={<RateTutor />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="login" element={<Login />} />
+          <Route path="signup" element={<Signup />} />
+          <Route path="report-account" element={<ReportAccount />} />
+          <Route path="report-account/:trackingId" element={<ReportDetails />} /> 
+          <Route path="confirm-payment" element={<ConfirmPayment />} />
+          <Route path="messaging" element={<Messaging/>} />
         </Route>
       </Routes>
     </Router>
   );
 }
+
+const Conversation = ({ senderId, receiverId }) => {
+    const [messages, setMessages] = useState([]);
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/messages/conversation', {
+                    params: {
+                        senderId,
+                        receiverId
+                    }
+                });
+                setMessages(response.data);
+            } catch (error) {
+                console.error('Error fetching conversation:', error);
+            }
+        };
+
+        fetchMessages();
+    }, [senderId, receiverId]);
+
+    return (
+        <div>
+            {messages.map((message) => (
+                <p key={message.id}>{message.content}</p>
+            ))}
+        </div>
+    );
+};
+
 
 export default App;

@@ -2,8 +2,38 @@
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@fullcalendar/daygrid": "^6.1.15",
+    "@fullcalendar/interaction": "^6.1.15",
+    "@fullcalendar/react": "^6.1.15",
+    "@fullcalendar/timegrid": "^6.1.15",
     "@mui/icons-material": "^6.1.2",
     "@mui/material": "^6.1.2",
-    "react-icons": "^5.3.0"
-  }
+    "assert": "^2.1.0",
+    "axios": "^1.7.7",
+    "body-parser": "^1.20.3",
+    "browserify-zlib": "^0.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "https-browserify": "^1.0.0",
+    "mongodb": "^6.9.0",
+    "mongoose": "^8.7.1",
+    "react-icons": "^5.3.0",
+    "react-router-dom": "^6.26.2",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.4",
+    "util": "^0.12.5"
+  },
+  "name": "boilertutors",
+  "version": "1.0.0",
+  "description": "The purpose of this project is to give students a “one stop shop” for resources related to tutoring and online help for classes at Purdue University. It will combine resources across multiple websites to give students a consistent and up to date resource for external help for their classes in one  website that is accessible on mobile and desktop.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

@@ -1,77 +1,81 @@
-// src/pages/discussionBoard.js
-
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';  // Make sure axios is imported
 import './discussionBoard.css';
 import Post from './Post'; // Import the Post component
 
 const DiscussionBoard = () => {
-  // Simulate current user ID
-  const currentUserId = 1;
-
-  // Initialize posts from localStorage
-  const [posts, setPosts] = useState(() => {
-    const savedPosts = localStorage.getItem('posts');
-    const loadedPosts = savedPosts ? JSON.parse(savedPosts) : [];
-    // Ensure all posts have a 'replies' array
-    return loadedPosts.map((post) => ({
-      ...post,
-      replies: post.replies || [],
-    }));
-  });
-
+  const [posts, setPosts] = useState([]);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
 
-  // Save posts to localStorage whenever they change
+  // Fetch all posts once on component mount
   useEffect(() => {
-    localStorage.setItem('posts', JSON.stringify(posts));
-  }, [posts]);
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/posts');
+        setPosts(response.data);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    fetchPosts();
+  }, []); // Empty dependency array means this only runs once, preventing infinite loops
 
   // Handler for creating a new post
-  const handleCreatePost = (e) => {
+  const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (newPostTitle && newPostContent) {
-      const newPost = {
-        id: Date.now(),
-        userId: currentUserId,
+    try {
+      const response = await axios.post('http://localhost:3000/posts', {
         title: newPostTitle,
         content: newPostContent,
-        replies: [], // Ensure replies is initialized as an empty array
-      };
-      setPosts([...posts, newPost]);
+        author: 'currentUserId', // Replace with the actual user id
+      });
+      setPosts([...posts, response.data]);
       setNewPostTitle('');
       setNewPostContent('');
       setShowCreatePost(false);
+    } catch (error) {
+      console.error('Error creating post:', error);
     }
   };
 
   // Handler for deleting a post
-  const handleDeletePost = (postId) => {
-    const updatedPosts = posts.filter((post) => post.id !== postId);
-    setPosts(updatedPosts);
+  const handleDeletePost = async (postId) => {
+    try {
+      await axios.delete(`http://localhost:3000/posts/${postId}`);
+      setPosts(posts.filter((post) => post._id !== postId));
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
   };
 
   // Handler for editing a post
-  const handleEditPost = (postId, updatedTitle, updatedContent) => {
-    const updatedPosts = posts.map((post) =>
-      post.id === postId ? { ...post, title: updatedTitle, content: updatedContent } : post
-    );
-    setPosts(updatedPosts);
+  const handleEditPost = async (postId, updatedTitle, updatedContent) => {
+    try {
+      const response = await axios.put(`http://localhost:3000/posts/${postId}`, {
+        title: updatedTitle,
+        content: updatedContent,
+      });
+      setPosts(posts.map((post) => (post._id === postId ? response.data : post)));
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
   };
 
   // Handler for adding a reply to a post
-  const handleAddReply = (postId, replyContent) => {
-    const updatedPosts = posts.map((post) =>
-      post.id === postId
-        ? {
-            ...post,
-            replies: [...(post.replies || []), { content: replyContent, userId: currentUserId }],
-          }
-        : post
-    );
-    setPosts(updatedPosts);
+  const handleAddReply = async (postId, replyContent) => {
+    try {
+      const response = await axios.post(`http://localhost:3000/posts/${postId}/replies`, {
+        content: replyContent,
+        author: 'currentUserId', // Replace with the actual user id
+      });
+      setPosts(posts.map((post) => (post._id === postId ? response.data : post)));
+    } catch (error) {
+      console.error('Error adding reply:', error);
+    }
   };
 
   // Filter posts based on search query
@@ -139,9 +143,9 @@ const DiscussionBoard = () => {
       ) : (
         filteredPosts.map((post) => (
           <Post
-            key={post.id}
+            key={post._id}
             post={post}
-            currentUserId={currentUserId}
+            currentUserId={'currentUserId'}
             handleDeletePost={handleDeletePost}
             handleEditPost={handleEditPost}
             handleAddReply={handleAddReply}
