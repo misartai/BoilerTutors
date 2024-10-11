@@ -1,6 +1,0 @@
-spring:
-  data:
-    mongodb:
-      database: messagingApp
-      host: localhost
-      port: 27017
