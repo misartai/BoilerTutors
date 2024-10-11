@@ -14,6 +14,14 @@ mongoose.connect(uri)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
+// User Schema
+const userSchema = new mongoose.Schema({
+  username: String,
+  email: String
+});
+
+const User = mongoose.model('User', userSchema);
+
 // Discussion Post Schema with replies
 const postSchema = new mongoose.Schema({
   title: String,
@@ -63,12 +71,12 @@ app.post('/posts', async (req, res) => {
     const savedPost = await newPost.save();
     res.json(savedPost);
 
-    // Send email notification to a specific email (shivliagrawal14@gmail.com)
+    // Send email notification to the author
     const mailOptions = {
       from: 'boilertutors420@gmail.com',
       to: 'shivliagrawal14@gmail.com',
       subject: 'New Post Created',
-      text: `Dear user,\n\nA new post titled "${req.body.title}" has been successfully created.\n\nThank you for contributing!`
+      text: `Dear user,\n\nYour post titled "${req.body.title}" has been successfully created.\n\nThank you for contributing!`
     };
 
     transporter.sendMail(mailOptions, (err, info) => {
@@ -78,6 +86,32 @@ app.post('/posts', async (req, res) => {
         console.log('Post creation email sent:', info.response);
       }
     });
+
+    // Handle mentions in the post content
+    const mentionPattern = /@\w+/g;
+    const mentions = req.body.content.match(mentionPattern);
+    if (mentions) {
+      for (const mention of mentions) {
+        const username = mention.substring(1); // Remove '@' from the mention
+        const mentionedUser = await User.findOne({ username });
+        if (mentionedUser) {
+          const mentionMailOptions = {
+            from: 'boilertutors420@gmail.com',
+            to: mentionedUser.email,
+            subject: 'You Have Been Mentioned in a Post',
+            text: `Dear ${mentionedUser.username},\n\nYou have been mentioned in a post titled "${req.body.title}".\n\nContent: ${req.body.content}\n\nThank you!`
+          };
+
+          transporter.sendMail(mentionMailOptions, (err, info) => {
+            if (err) {
+              console.error('Error sending mention notification email:', err);
+            } else {
+              console.log('Mention notification email sent:', info.response);
+            }
+          });
+        }
+      }
+    }
   } catch (error) {
     console.error('Error saving post:', error); // Log the error
     res.status(500).json({ error: 'Error saving post' });
@@ -95,12 +129,12 @@ app.post('/posts/:id/replies', async (req, res) => {
     const updatedPost = await post.save();
     res.json(updatedPost);
 
-    // Send email notification for new reply to specific email (shivliagrawal14@gmail.com)
+    // Send email notification to the original author of the post
     const mailOptions = {
       from: 'boilertutors420@gmail.com',
       to: 'shivliagrawal14@gmail.com',
-      subject: 'New Reply to a Post',
-      text: `Dear user,\n\nA post titled "${post.title}" has received a new reply.\n\nReply: ${req.body.content}\n\nThank you for contributing!`
+      subject: 'New Reply to Your Post',
+      text: `Dear user,\n\nYour post titled "${post.title}" has received a new reply.\n\nReply: ${req.body.content}\n\nThank you for contributing!`
     };
 
     transporter.sendMail(mailOptions, (err, info) => {
@@ -110,6 +144,32 @@ app.post('/posts/:id/replies', async (req, res) => {
         console.log('Reply notification email sent:', info.response);
       }
     });
+
+    // Handle mentions in the reply content
+    const mentionPattern = /@\w+/g;
+    const mentions = req.body.content.match(mentionPattern);
+    if (mentions) {
+      for (const mention of mentions) {
+        const username = mention.substring(1); // Remove '@' from the mention
+        const mentionedUser = await User.findOne({ username });
+        if (mentionedUser) {
+          const mentionMailOptions = {
+            from: 'boilertutors420@gmail.com',
+            to: mentionedUser.email,
+            subject: 'You Have Been Mentioned in a Reply',
+            text: `Dear ${mentionedUser.username},\n\nYou have been mentioned in a reply to the post titled "${post.title}".\n\nReply: ${req.body.content}\n\nThank you!`
+          };
+
+          transporter.sendMail(mentionMailOptions, (err, info) => {
+            if (err) {
+              console.error('Error sending mention notification email:', err);
+            } else {
+              console.log('Mention notification email sent:', info.response);
+            }
+          });
+        }
+      }
+    }
   } catch (error) {
     res.status(500).json({ error: 'Error adding reply' });
   }
