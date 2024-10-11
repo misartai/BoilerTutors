@@ -22,7 +22,6 @@ const User = mongoose.model('User', userSchema);
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
-
 // Serve the main HTML page with embedded JavaScript and linked CSS
 app.get('/', (req, res) => {
   res.send(`

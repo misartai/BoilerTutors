@@ -2,32 +2,46 @@ import React from 'react';
 import { Button } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { FaStar } from 'react-icons/fa'; 
+import axios from 'axios';
 import './rateTutor.css';
 
 const RateTutor = () => {
-  // Initialize reviews from localStorage
-  const [reviews, setReviews] = useState(() => {
-    const savedReviews = localStorage.getItem('reviews');
-    return savedReviews ? JSON.parse(savedReviews) : [];
-  });
-
+  const [reviews, setReviews] = useState([]); // Fetch reviews from the server
   const [newRating, setNewRating] = useState(0); // Star rating (1-5)
   const [newReviewContent, setNewReviewContent] = useState('');
 
-  // Save reviews to localStorage whenever they change
+  // Fetch reviews from the server when the component loads
   useEffect(() => {
-    localStorage.setItem('reviews', JSON.stringify(reviews));
-  }, [reviews]);
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/reviews');
+        setReviews(response.data);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
+    };
+
+    fetchReviews();
+  }, []);
 
   // Handler for creating a new review
-  const handleSubmitReview = (e) => {
+  const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (newRating && newReviewContent) {
       const newReview = {
         rating: newRating,
         content: newReviewContent,
       };
-      setReviews([...reviews, newReview]);
+
+      try {
+        // Send the review to the server
+        const response = await axios.post('http://localhost:8080/reviews', newReview);
+        // Add the new review to the reviews list after a successful response
+        setReviews([...reviews, response.data]);
+      } catch (error) {
+        console.error('Error submitting review:', error);
+      }
+
       setNewRating(0); // Reset rating
       setNewReviewContent(''); // Reset review content
     }
@@ -39,14 +53,21 @@ const RateTutor = () => {
   };
 
   // Delete review
-  const handleDeleteReview = (indexToDelete) => {
-    const updatedReviews = reviews.filter((_, index) => index !== indexToDelete);
-    setReviews(updatedReviews);
+  const handleDeleteReview = async (indexToDelete) => {
+    try {
+      const reviewToDelete = reviews[indexToDelete];
+      await axios.delete(`http://localhost:8080/reviews/${reviewToDelete._id}`);
+      // Remove the review from the state
+      const updatedReviews = reviews.filter((_, index) => index !== indexToDelete);
+      setReviews(updatedReviews);
+    } catch (error) {
+      console.error('Error deleting review:', error);
+    }
   };
 
   // Calculate average rating
   const averageRating = reviews.length
-    ? (reviews.reduce((sum, review) => sum + Number(review.rating), 0) / reviews.length).toFixed(1) // Ensure rating is treated as a number
+    ? (reviews.reduce((sum, review) => sum + Number(review.rating), 0) / reviews.length).toFixed(1)
     : 0;
 
   return (
@@ -115,13 +136,12 @@ const RateTutor = () => {
               <h2>Rating: {review.rating}/5</h2>
               <p>{review.content}</p>
             </div>
-            <hr /> {/* Line separator between reviews */}
+            <hr />
           </div>
         ))
       )}
     </div>
   );
 };
-
 
 export default RateTutor;
