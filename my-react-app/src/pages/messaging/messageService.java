@@ -4,14 +4,14 @@ public class messageService {
 
     public List<Message> getMessagesByUserID(String userID) {
         Query query = new Query();
-        query.addCriteria(Critera.where("reciever").is(userID));
+        query.addCriteria(Criteria.where("reciever").is(userID));
 
         return mongoTemplate.find(query, Message.class);
     }
 
     public List<User> getContactsForUser(String userID) {
         Query query = new Query();
-        query.addCriteria(Critera.where("sender").is(userID));
+        query.addCriteria(Criteria.where("sender").is(userID));
 
         return mongoTemplate.findDistinct(query, "reciever", Message.class, User.class);
     }
