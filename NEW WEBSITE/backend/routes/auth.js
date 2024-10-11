@@ -66,12 +66,16 @@ router.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).send('Invalid email or password');
+      return res.status(401).send('Invalid email, no user of this email exists.');
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(400).send('Invalid email or password');
+      return res.status(400).send('Incorrect Password');
+    }
+
+    if (user.validAccount === false) {
+      return res.status(403).send('Account Pending');
     }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -81,6 +85,92 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Failed to log in');
   }
 });
+
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).send('Email not found');
+    }
+
+    // Generate and send a confirmation code
+    const resetCode = Math.floor(100000 + Math.random() * 900000);  // Generate 6-digit code
+    tempUsers[email] = { resetCode };  // Store the code temporarily
+
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: email,
+      subject: 'Password Reset Code',
+      text: `Your password reset code is: ${resetCode}`
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).send('Reset code sent');
+  } catch (err) {
+    console.error('Error sending reset code:', err);
+    res.status(500).send('Error sending reset code');
+  }
+});
+
+router.post('/verify-reset-code', async (req, res) => {
+  const { email, code } = req.body;
+
+  const tempUser = tempUsers[email];
+  if (!tempUser || tempUser.resetCode != code) {
+    return res.status(400).send('Invalid reset code');
+  }
+
+  res.status(200).send('Code verified');
+});
+
+router.post('/resend-reset-code', async (req, res) => {
+  const { email } = req.body;
+
+  const tempUser = tempUsers[email];
+  if (!tempUser) {
+    return res.status(400).send('Invalid email');
+  }
+
+  const resetCode = Math.floor(100000 + Math.random() * 900000);  // Generate new code
+  tempUser.resetCode = resetCode;  // Update the code
+
+  const mailOptions = {
+    from: 'your-email@gmail.com',
+    to: email,
+    subject: 'Resend: Password Reset Code',
+    text: `Your new password reset code is: ${resetCode}`
+  };
+
+  await transporter.sendMail(mailOptions);
+  res.status(200).send('Reset code resent');
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).send('Email not found');
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    // Generate a new JWT token after password reset
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({ token , validAccount: user.validAccount });
+  } catch (err) {
+    console.error('Error resetting password:', err);
+    res.status(500).send('Error resetting password');
+  }
+});
+
 
 // Route to verify the code
 router.post('/verify-email', async (req, res) => {
@@ -113,7 +203,7 @@ router.post('/verify-email', async (req, res) => {
   
         try {
           await transporter.sendMail(mailOptions);
-          console.log('Admin notified about pending professor account. You will recieve an email when your account is approved.');
+          console.log('Admin notified about pending professor account.');
         } catch (err) {
           console.error('Error sending email to admin:', err);
         }
@@ -124,7 +214,7 @@ router.post('/verify-email', async (req, res) => {
     // Remove from temp storage
     delete tempUsers[email];
 
-    res.status(200).json({ token });
+    res.status(200).json({ token, validAccount: newUser.validAccount });
   } else {
     res.status(400).send('Invalid confirmation code');
   }
