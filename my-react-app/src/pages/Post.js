@@ -1,6 +1,8 @@
+// src/pages/Post.js
 import React, { useState } from 'react';
+import './discussionBoard.css';
 
-const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAddReply }) => {
+const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAddReply, toggleFavourite }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [updatedTitle, setUpdatedTitle] = useState(post.title);
   const [updatedContent, setUpdatedContent] = useState(post.content);
@@ -44,6 +46,9 @@ const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAdd
         <div>
           <h2>{post.title}</h2>
           <p>{post.content}</p>
+          <div className="post-meta">
+            <span>Word count: {post.content.split(' ').length}</span>
+          </div>
           {/* Actions */}
           <div className="post-actions">
             <button onClick={() => setShowReplyForm(!showReplyForm)}>
@@ -55,6 +60,12 @@ const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAdd
                 <button onClick={() => handleDeletePost(post._id)}>Delete</button>
               </>
             )}
+            <button
+              className={post.favourite ? 'favourite active' : 'favourite'}
+              onClick={() => toggleFavourite(post._id)}
+            >
+              ❤
+            </button>
           </div>
           {/* Reply Form */}
           {showReplyForm && (

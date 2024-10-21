@@ -1,7 +1,8 @@
+// src/pages/discussionBoard.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';  // Make sure axios is imported
+import axios from 'axios';
 import './discussionBoard.css';
-import Post from './Post'; // Import the Post component
+import Post from './Post';
 
 const DiscussionBoard = () => {
   const [posts, setPosts] = useState([]);
@@ -22,7 +23,7 @@ const DiscussionBoard = () => {
     };
 
     fetchPosts();
-  }, []); // Empty dependency array means this only runs once, preventing infinite loops
+  }, []);
 
   // Handler for creating a new post
   const handleCreatePost = async (e) => {
@@ -75,6 +76,16 @@ const DiscussionBoard = () => {
       setPosts(posts.map((post) => (post._id === postId ? response.data : post)));
     } catch (error) {
       console.error('Error adding reply:', error);
+    }
+  };
+
+  // Handler for toggling favourite status of a post
+  const toggleFavourite = async (postId) => {
+    try {
+      const response = await axios.put(`http://localhost:3000/posts/${postId}/favourite`);
+      setPosts(posts.map((post) => (post._id === postId ? response.data : post)));
+    } catch (error) {
+      console.error('Error toggling favourite status:', error);
     }
   };
 
@@ -149,6 +160,7 @@ const DiscussionBoard = () => {
             handleDeletePost={handleDeletePost}
             handleEditPost={handleEditPost}
             handleAddReply={handleAddReply}
+            toggleFavourite={toggleFavourite}
           />
         ))
       )}
