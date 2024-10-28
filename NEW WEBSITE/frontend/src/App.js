@@ -10,6 +10,7 @@ import ConfirmationCode from './components/ConfirmCode';
 import NewPassword from './components/NewPassword';
 import RateTutor from './components/RateTutor';
 import ProtectedRoute from './components/Protectedroute';
+import Messaging from './components/messaging';
 
 function App() {
   return (
@@ -30,6 +31,12 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/messaging" element={
+                    <ProtectedRoute>
+                      <Messaging />
+                    </ProtectedRoute>
+                  }
+                />
         {/* Add other routes as needed */}
       </Routes>
     </Router>

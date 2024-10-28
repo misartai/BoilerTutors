@@ -100,7 +100,7 @@ router.post('/forgot-password', async (req, res) => {
     tempUsers[email] = { resetCode };  // Store the code temporarily
 
     const mailOptions = {
-      from: 'your-email@gmail.com',
+      from: 'boilertutors420@gmail.com',
       to: email,
       subject: 'Password Reset Code',
       text: `Your password reset code is: ${resetCode}`
