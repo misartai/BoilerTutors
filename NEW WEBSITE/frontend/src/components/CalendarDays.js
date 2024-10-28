@@ -17,8 +17,8 @@ export default function MyCalendar() {
     notifyTime: '1 hour',
     optInNotifications: true,
   });
-  const [tutors, setTutors] = useState([]); // State to hold unique tutor names
-  const [selectedTutor, setSelectedTutor] = useState(''); // State to hold selected tutor for filtering
+  const [tutors, setTutors] = useState([]);
+  const [selectedTutor, setSelectedTutor] = useState('');
 
   // Generate time intervals for selection
   const generateTimeIntervals = (start, end) => {
@@ -28,24 +28,22 @@ export default function MyCalendar() {
 
     while (currentTime <= endTime) {
       intervals.push(currentTime.toTimeString().substring(0, 5));
-      currentTime.setMinutes(currentTime.getMinutes() + 30); // Increment by 60 minutes
+      currentTime.setMinutes(currentTime.getMinutes() + 30);
     }
 
     return intervals;
   };
 
-  const timeOptions = generateTimeIntervals('08:00', '20:00'); // Example: from 8 AM to 8 PM
+  const timeOptions = generateTimeIntervals('08:00', '20:00');
 
   // Fetch events and unique tutor names from the server when the component mounts
   useEffect(() => {
-    fetch('http://localhost:3001/events')
+    fetch('http://localhost:3001/events')  // Adjust the URL if needed
       .then((response) => response.json())
       .then((data) => {
         setEvents(data);
-
-        // Extract unique tutor names
         const uniqueTutors = Array.from(new Set(data.map(event => event.tutorName)));
-        setTutors(uniqueTutors); // Store unique tutor names in state
+        setTutors(uniqueTutors);
       })
       .catch((error) => console.error('Error fetching events:', error));
   }, []);
@@ -66,11 +64,10 @@ export default function MyCalendar() {
       .map((event) => event.end.split('T')[1]);
 
     return timeOptions
-      .filter((time) => time > selectedStartTime) // Only show end times after selected start time
-      .filter((time) => !bookedEndTimes.includes(time)); // Exclude already booked end times
+      .filter((time) => time > selectedStartTime)
+      .filter((time) => !bookedEndTimes.includes(time));
   };
 
-  // Get available start and end times
   const availableStartTimes = filterAvailableStartTimes(formData.date, events);
   const availableEndTimes = filterAvailableEndTimes(formData.date, events, formData.startTime);
 
@@ -106,26 +103,25 @@ export default function MyCalendar() {
       .then((response) => response.json())
       .then((data) => {
         setEvents([...events, data]); // Add the new event to the state
+        // Optionally, reset form after submission
+        setFormData({
+          title: '',
+          date: formData.date,
+          startTime: '',
+          endTime: '',
+          email: '',
+          tutorName: '',
+          notifyTime: '1 hour',
+          optInNotifications: true,
+        });
       })
       .catch((error) => console.error('Error adding event:', error));
-
-    // Reset form data
-    setFormData({
-      title: '',
-      date: formData.date,
-      startTime: '',
-      endTime: '',
-      email: '',
-      tutorName: '',
-      notifyTime: '1 hour',
-      optInNotifications: true,
-    });
   };
 
   // Filter events by selected tutor
   const filteredEvents = selectedTutor
     ? events.filter(event => event.tutorName === selectedTutor)
-    : events; // Show all events if no tutor is selected
+    : events;
 
   return (
     <div className="calendar-container">
