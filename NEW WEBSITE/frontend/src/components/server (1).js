@@ -3,9 +3,6 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-const authRoutes = require('./routes/auth'); // Assuming you have your auth routes in a separate file
-const User = require('./models/User'); // Import the User model
-const Event = require('./models/Event'); // Import the Event model
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -13,21 +10,31 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://aryanshahu13:VyQrFxeiIhkLIWFI@boilertutors.jk0hb.mongodb.net/')
+mongoose.connect('mongodb://localhost:27017/calendarDB', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('Failed to connect to MongoDB:', err));
+
+// Define Event schema and model
+const eventSchema = new mongoose.Schema({
+  title: String,
+  start: String,
+  end: String,
+  email: String,
+  tutorName: String,
+  notifyTime: String, // Store custom reminder time
+  optInNotifications: Boolean // Track user preference for notifications
+});
+
+const Event = mongoose.model('Event', eventSchema);
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL, // Use environment variable for email
-    pass: process.env.EMAIL_PASSWORD, // Use environment variable for App Password
+    user: 'boilertutors420@gmail.com', // Use environment variable for email
+    pass: 'zins bweo neuh zzgz', // Use environment variable for App Password
   },
 });
-
-// Use authentication routes
-app.use('/api/auth', authRoutes);  // Ensure your auth routes are set up
 
 // Route to get all events from the database
 app.get('/events', async (req, res) => {
@@ -62,7 +69,7 @@ app.post('/events', async (req, res) => {
     if (optInNotifications) {
       // Send confirmation email with tutor's name
       const confirmationMailOptions = {
-        from: process.env.EMAIL,
+        from: 'boilertutors420@gmail.com',
         to: email,
         subject: 'Appointment Confirmation',
         text: `Dear student,\n\nYour appointment with ${tutorName} is confirmed.\n\nDetails:\n- Date: ${start}\n- Tutor: ${tutorName}\n- Duration: ${start} to ${end}\n\nThank you!`
@@ -76,7 +83,7 @@ app.post('/events', async (req, res) => {
         }
       });
 
-      // Schedule a reminder email
+      // Schedule a reminder email with tutor's name
       const reminderTime = calculateReminderTime(start, notifyTime);
       const currentTime = new Date();
 
@@ -109,6 +116,7 @@ app.post('/events', async (req, res) => {
   }
 });
 
+
 // Function to calculate reminder time based on user's preference
 function calculateReminderTime(appointmentTime, notifyTime) {
   const appointmentDate = new Date(appointmentTime);
@@ -123,7 +131,7 @@ function calculateReminderTime(appointmentTime, notifyTime) {
 }
 
 // Start the server
-const port = process.env.PORT || 5000; // Use the port from environment variables or default to 5000
+const port = 3001;
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

@@ -1,41 +1,77 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import MyCalendar from './CalendarDays'; // Import your CalendarDays component
 
 function Dashboard() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState('dashboard'); // State to manage current page
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
       try {
-        const token = localStorage.getItem('token');  // Retrieve token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No token found. Please log in.');
+        }
         const response = await axios.get('/api/auth/me', {
           headers: {
-            Authorization: `Bearer ${token}`  // Attach the token to the request
+            Authorization: `Bearer ${token}`
           }
         });
         setUser(response.data);
       } catch (err) {
-        setError('Failed to load user data');
+        console.error(err);
+        setError('Failed to load user data: ' + err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUserData();
   }, []);
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   if (error) {
     return <div>{error}</div>;
   }
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
+  // Function to render the appropriate component based on the current page
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'calendar':
+        return <MyCalendar />;
+      case 'dashboard':
+      default:
+        return (
+          <div>
+            <h1>Welcome, {user.name}</h1>
+            <p>Email: {user.email}</p>
+          </div>
+        );
+    }
+  };
 
   return (
     <div>
-      <h1>Welcome, {user.name}</h1>
-      <p>Email: {user.email}</p>
-      {/* Render other user-specific content here */}
+      <h1>Welcome to the Dashboard</h1>
+
+      {/* Navigation Links */}
+      <nav>
+        <button onClick={() => setCurrentPage('dashboard')}>Dashboard</button>{' '}
+        <button onClick={() => setCurrentPage('calendar')}>Calendar</button>{' '}
+        {/* Add other navigation buttons here as needed */}
+      </nav>
+
+      {/* Render the content based on current page selection */}
+      <div className="content">
+        {renderContent()}
+      </div>
     </div>
   );
 }
