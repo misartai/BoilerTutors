@@ -29,8 +29,82 @@ const transporter = nodemailer.createTransport({
 // Use authentication routes
 app.use('/api/auth', authRoutes);  // Ensure your auth routes are set up
 
+// ----- Tutor & Review Functionality -----
+
+// Schema for reviews (used for RateTutor functionality)
+const reviewSchema = new mongoose.Schema({
+  rating: { type: Number, required: true },
+  content: { type: String, required: true },
+});
+
+// Schema for tutors (used for RateTutor functionality)
+const tutorSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  reviews: [reviewSchema],
+});
+
+// Virtual property to calculate average rating
+tutorSchema.virtual('averageRating').get(function () {
+  if (this.reviews.length === 0) return 0;
+  const totalRating = this.reviews.reduce((acc, review) => acc + review.rating, 0);
+  return (totalRating / this.reviews.length).toFixed(2);
+});
+
+tutorSchema.set('toJSON', { virtuals: true });
+
+// Tutor model
+const Tutor = mongoose.model('Tutor', tutorSchema);
+
+// Fetch all tutors (for dropdown)
+app.get('/api/tutors', async (req, res) => {
+  try {
+    const tutors = await Tutor.find();
+    res.json(tutors);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching tutors' });
+  }
+});
+
+// Fetch reviews for a specific tutor
+app.get('/api/tutors/:tutorId/reviews', async (req, res) => {
+  try {
+    const tutor = await Tutor.findById(req.params.tutorId);
+    res.json(tutor.reviews);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching reviews' });
+  }
+});
+
+// Fetch a specific tutor for average rating
+app.get('/api/tutors/:tutorId', async (req, res) => {
+  try {
+    const tutor = await Tutor.findById(req.params.tutorId);
+    res.json(tutor);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching tutor' });
+  }
+});
+
+// Add a new review for a specific tutor
+app.post('/api/tutors/:tutorId/reviews', async (req, res) => {
+  try {
+    const tutor = await Tutor.findById(req.params.tutorId);
+    const newReview = {
+      rating: req.body.rating,
+      content: req.body.content
+    };
+    tutor.reviews.push(newReview);
+    await tutor.save();
+    res.json(newReview);
+  } catch (error) {
+    res.status(500).json({ error: 'Error adding review' });
+  }
+});
+
+// ----- Event Functionality -----
+
 // Route to get all events from the database
-app.get('/events', async (req, res) => {
+app.get('/api/events', async (req, res) => {
   try {
     const events = await Event.find(); // Fetch all events from MongoDB
     res.json(events); // Send the events as a response
@@ -41,7 +115,7 @@ app.get('/events', async (req, res) => {
 });
 
 // Route to add a new event
-app.post('/events', async (req, res) => {
+app.post('/api/events', async (req, res) => {
   const { title, start, end, email, tutorName, notifyTime, optInNotifications } = req.body;
 
   // Log the incoming request data for debugging
