@@ -8,6 +8,7 @@ import PendingApproval from './components/PendingApproval';
 import ForgotPassword from './components/ForgottenPassword';
 import ConfirmationCode from './components/ConfirmCode';
 import NewPassword from './components/NewPassword';
+import RateTutor from './components/RateTutor';
 import ProtectedRoute from './components/Protectedroute';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/confirm-code" element={<ConfirmationCode />} />
         <Route path="/new-password" element={<NewPassword />} />
+        <Route path="/rate-tutor" element={<RateTutor />} />
         <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
