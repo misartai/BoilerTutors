@@ -18,8 +18,8 @@ function Dashboard() {
         }
         const response = await axios.get('/api/auth/me', {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         setUser(response.data);
       } catch (err) {
@@ -45,7 +45,7 @@ function Dashboard() {
   const renderContent = () => {
     switch (currentPage) {
       case 'calendar':
-        return <MyCalendar />;
+        return user && <MyCalendar user={user} />; // Pass the user object to MyCalendar
       case 'dashboard':
       default:
         return (

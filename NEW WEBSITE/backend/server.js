@@ -103,10 +103,26 @@ app.post('/api/tutors/:tutorId/reviews', async (req, res) => {
 
 // ----- Event Functionality -----
 
-// Route to get all events from the database
+// Updated Event Schema to include userEmail and removed userId
+const eventSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  start: { type: String, required: true },
+  end: { type: String, required: true },
+  email: { type: String, required: true }, // Original email
+  userEmail: { type: String, required: true }, // New field to track user's email
+  tutorName: { type: String, required: true },
+  notifyTime: { type: String, required: true },
+  optInNotifications: { type: Boolean, required: true },
+});
+
+// Event model
+const Event = mongoose.model('Event', eventSchema);
+
+// Route to get all events for a specific user's email
 app.get('/api/events', async (req, res) => {
+  const userEmail = req.query.userEmail; // Get userEmail from query parameters
   try {
-    const events = await Event.find(); // Fetch all events from MongoDB
+    const events = await Event.find({ userEmail }); // Filter events by userEmail
     res.json(events); // Send the events as a response
   } catch (err) {
     console.error('Error retrieving events:', err);
@@ -116,17 +132,17 @@ app.get('/api/events', async (req, res) => {
 
 // Route to add a new event
 app.post('/api/events', async (req, res) => {
-  const { title, start, end, email, tutorName, notifyTime, optInNotifications } = req.body;
+  const { title, start, end, email, userEmail, tutorName, notifyTime, optInNotifications } = req.body;
 
   // Log the incoming request data for debugging
   console.log('Incoming event data:', req.body);
 
   // Perform simple validation on incoming data
-  if (!title || !start || !end || !email || !tutorName) {
+  if (!title || !start || !end || !email || !tutorName || !userEmail) {
     return res.status(400).send('All fields are required.');
   }
 
-  const newEvent = new Event({ title, start, end, email, tutorName, notifyTime, optInNotifications });
+  const newEvent = new Event({ title, start, end, email, userEmail, tutorName, notifyTime, optInNotifications });
 
   try {
     const savedEvent = await newEvent.save(); // Save the event to the database
