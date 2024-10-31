@@ -7,15 +7,15 @@ const authRoutes = require('./routes/auth'); // Assuming you have your auth rout
 const User = require('./models/User'); // Import the User model
 const Event = require('./models/Event'); // Import the Event model
 require('dotenv').config(); // Load environment variables from .env file
-const { v4: uuidv4 } = require('uuid');
+
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const uri = 'mongodb+srv://aryanshahu13:VyQrFxeiIhkLIWFI@boilertutors.jk0hb.mongodb.net/';
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((err) => console.error('Failed to connect to MongoDB:', err));
+// Connect to MongoDB
+mongoose.connect('mongodb+srv://aryanshahu13:VyQrFxeiIhkLIWFI@boilertutors.jk0hb.mongodb.net/')
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
 // Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
@@ -41,20 +41,13 @@ const reviewSchema = new mongoose.Schema({
 const tutorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   reviews: [reviewSchema],
-  averageRating: { type: Number, default: 0 }, // Add averageRating field
 });
 
-// Helper function to calculate average rating
-tutorSchema.methods.calculateAverageRating = function () {
+// Virtual property to calculate average rating
+tutorSchema.virtual('averageRating').get(function () {
   if (this.reviews.length === 0) return 0;
   const totalRating = this.reviews.reduce((acc, review) => acc + review.rating, 0);
-  return totalRating / this.reviews.length;
-};
-
-// Pre-save hook to update average rating
-tutorSchema.pre('save', function (next) {
-  this.averageRating = this.calculateAverageRating();
-  next();
+  return (totalRating / this.reviews.length).toFixed(2);
 });
 
 tutorSchema.set('toJSON', { virtuals: true });
@@ -63,7 +56,7 @@ tutorSchema.set('toJSON', { virtuals: true });
 const Tutor = mongoose.model('Tutor', tutorSchema);
 
 // Fetch all tutors (for dropdown)
-app.get('/tutors', async (req, res) => {
+app.get('/api/tutors', async (req, res) => {
   try {
     const tutors = await Tutor.find();
     res.json(tutors);
@@ -73,7 +66,7 @@ app.get('/tutors', async (req, res) => {
 });
 
 // Fetch reviews for a specific tutor
-app.get('/tutors/:tutorId/reviews', async (req, res) => {
+app.get('/api/tutors/:tutorId/reviews', async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.tutorId);
     res.json(tutor.reviews);
@@ -98,162 +91,15 @@ app.post('/api/tutors/:tutorId/reviews', async (req, res) => {
     const tutor = await Tutor.findById(req.params.tutorId);
     const newReview = {
       rating: req.body.rating,
-      content: req.body.content,
+      content: req.body.content
     };
     tutor.reviews.push(newReview);
-    
-    // Update the average rating before saving
-    tutor.averageRating = tutor.calculateAverageRating();
     await tutor.save();
-    
     res.json(newReview);
   } catch (error) {
     res.status(500).json({ error: 'Error adding review' });
   }
 });
-
-// ----- Payment Functionality -----
-
-// Schema for payments
-const paymentSchema = new mongoose.Schema({
-  studentName: { type: String, required: true },
-  payments: [
-    {
-      status: { type: String, required: true },
-      timestamp: { type: String, required: true },
-      reason: { type: String, default: '' }, // Reason for denial if applicable
-    },
-  ],
-});
-
-const Payment = mongoose.model('Payment', paymentSchema);
-
-// Route to fetch all students (if not already created)
-app.get('/students', async (req, res) => {
-  // Replace with actual student fetching logic
-  const students = await User.find({ accountType: 'student' });
-  res.json(students);
-});
-
-app.post('/send-email', async (req, res) => {
-  const { subject, message, studentName } = req.body;
-
-  const mailOptions = {
-      from: process.env.EMAIL,
-      to: studentName, // Assuming you have the student's email in the database
-      subject: subject,
-      text: message,
-  };
-
-  try {
-      await transporter.sendMail(mailOptions);
-      res.json({ message: 'Email sent successfully' });
-  } catch (error) {
-      console.error('Error sending email:', error);
-      res.status(500).json({ error: 'Error sending email' });
-  }
-});
-
-
-app.post('/students/:studentName/payments', async (req, res) => {
-  try {
-      const { status, timestamp, reason } = req.body;
-      const studentName = req.params.studentName;
-
-      let paymentRecord = await Payment.findOne({ studentName });
-
-      if (!paymentRecord) {
-          paymentRecord = new Payment({ studentName, payments: [] });
-      }
-
-      // Prepare new payment entry
-      const newEntry = { status, timestamp, reason };
-      paymentRecord.payments.push(newEntry);
-      await paymentRecord.save();
-
-      // Send email notification if payment status is updated
-      const subject = `Payment Status Updated: ${status}`;
-      const message = `The payment status for ${studentName} has been updated to ${status} on ${timestamp}. Reason: ${reason || 'N/A'}.`;
-      await sendEmail(subject, message); // Assuming sendEmail function is defined above
-
-      res.json({ message: 'Payment status updated', paymentRecord });
-  } catch (error) {
-      console.error('Error updating payment status:', error);
-      res.status(500).send('Error updating payment status');
-  }
-});
-
-
-const reportSchema = new mongoose.Schema({
-  studentId: { type: String, required: true },
-  reports: [
-    {
-      trackingId: { type: String, required: true },
-      details: { type: String, required: true },
-      date: { type: Date, default: Date.now }
-    }
-  ]
-});
-
-const Report = mongoose.model('Report', reportSchema);
-app.post('/api/reports', async (req, res) => {
-  const { studentId, details } = req.body;
-  const trackingId = uuidv4();
-
-  try {
-    // Find or create a report entry for the student
-    let reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      reportEntry = new Report({ studentId, reports: [] });
-    }
-
-    // Add the new report to the reports array
-    reportEntry.reports.push({ trackingId, details });
-
-    // Save the updated report entry
-    await reportEntry.save();
-
-    res.status(201).json({ trackingId, details });
-  } catch (error) {
-    console.error('Error submitting report:', error);
-    res.status(500).json({ error: 'Failed to submit report' });
-  }
-});
-app.get('/api/reports/:studentId', async (req, res) => {
-  const { studentId } = req.params;
-
-  try {
-    const reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'No reports found for this student' });
-    }
-
-    res.json(reportEntry.reports); // Return the reports array for the student
-  } catch (error) {
-    console.error('Error fetching reports:', error);
-    res.status(500).json({ error: 'Error fetching reports' });
-  }
-});
-app.get('/api/reports/details/:trackingId', async (req, res) => {
-  const { trackingId } = req.params;
-
-  try {
-    const reportEntry = await Report.findOne({ 'reports.trackingId': trackingId });
-
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'Report not found' });
-    }
-
-    const report = reportEntry.reports.find(report => report.trackingId === trackingId);
-    res.json(report);
-  } catch (error) {
-    console.error('Error fetching report details:', error);
-    res.status(500).json({ error: 'Error fetching report details' });
-  }
-});
-
-
-
 
 // ----- Event Functionality -----
 
@@ -303,85 +149,55 @@ app.post('/api/events', async (req, res) => {
           console.log('Confirmation email sent:', info.response);
         }
       });
+
+      // Schedule a reminder email
+      const reminderTime = calculateReminderTime(start, notifyTime);
+      const currentTime = new Date();
+
+      if (reminderTime > currentTime) {
+        const delay = reminderTime - currentTime;
+
+        setTimeout(() => {
+          const reminderMailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: 'Appointment Reminder',
+            text: `Dear student,\n\nThis is a reminder for your upcoming appointment with ${tutorName}.\n\nDetails:\n- Date: ${start}\n- Tutor: ${tutorName}\n- Duration: ${start} to ${end}\n\nPlease make sure to be available on time!`
+          };
+
+          transporter.sendMail(reminderMailOptions, (err, info) => {
+            if (err) {
+              console.error('Error sending reminder email:', err);
+            } else {
+              console.log('Reminder email sent:', info.response);
+            }
+          });
+        }, delay);
+      }
     }
 
-    res.status(201).json(savedEvent); // Respond with the saved event
-  } catch (error) {
-    console.error('Error saving event:', error);
-    res.status(500).send('Error saving event');
+    res.status(201).json(savedEvent); // Send back the saved event
+  } catch (err) {
+    console.error('Failed to create event:', err); // Log error details
+    res.status(500).send('Failed to create event');
   }
 });
 
-// pay ledger
-// Schema for payment ledger
-const payLedgerSchema = new mongoose.Schema({
-  tutorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  transactions: [
-    {
-      studentName: { type: String, required: true },
-      status: { type: String, required: true }, // Confirmed or Denied
-      timestamp: { type: Date, required: true },
-      amount: { type: Number, required: true }, // Dummy value for now
-    },
-  ],
-});
-
-const PayLedger = mongoose.model('PayLedger', payLedgerSchema);
-
-// Route to add a new transaction to the payment ledger
-app.post('/api/payLedger/:tutorId', async (req, res) => {
-  const { tutorId } = req.params;
-  const { studentName, status, timestamp, amount } = req.body;
-
-  try {
-    let ledger = await PayLedger.findOne({ tutorId });
-
-    if (!ledger) {
-      ledger = new PayLedger({ tutorId, transactions: [] });
-    }
-
-    ledger.transactions.push({ studentName, status, timestamp, amount });
-    await ledger.save();
-
-    res.status(201).json({ message: 'Transaction added', ledger });
-  } catch (error) {
-    console.error('Error adding transaction:', error);
-    res.status(500).json({ error: 'Failed to add transaction' });
+// Function to calculate reminder time based on user's preference
+function calculateReminderTime(appointmentTime, notifyTime) {
+  const appointmentDate = new Date(appointmentTime);
+  switch (notifyTime) {
+    case '30 minutes':
+      return new Date(appointmentDate.getTime() - 30 * 60 * 1000); // 30 minutes before
+    case '15 minutes':
+      return new Date(appointmentDate.getTime() - 15 * 60 * 1000); // 15 minutes before
+    default:
+      return new Date(appointmentDate.getTime() - 60 * 60 * 1000); // 1 hour before (default)
   }
-});
-
-// Route to get transactions for a specific tutor with optional filters
-app.get('/api/payLedger/:tutorId', async (req, res) => {
-  const { tutorId } = req.params;
-  const { date, status } = req.query;
-
-  try {
-    const ledger = await PayLedger.findOne({ tutorId });
-    if (!ledger) {
-      return res.status(404).json({ error: 'No ledger found for this tutor' });
-    }
-
-    let transactions = ledger.transactions;
-
-    // Apply filters if provided
-    if (date) {
-      const targetDate = new Date(date);
-      transactions = transactions.filter((txn) => txn.timestamp.toDateString() === targetDate.toDateString());
-    }
-    if (status) {
-      transactions = transactions.filter((txn) => txn.status === status);
-    }
-
-    res.json(transactions);
-  } catch (error) {
-    console.error('Error fetching transactions:', error);
-    res.status(500).json({ error: 'Failed to fetch transactions' });
-  }
-});
-
+}
 
 // Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const port = process.env.PORT || 5000; // Use the port from environment variables or default to 5000
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
 });
