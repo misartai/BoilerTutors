@@ -10,6 +10,7 @@ import ConfirmationCode from './components/ConfirmCode';
 import NewPassword from './components/NewPassword';
 import RateTutor from './components/RateTutor';
 import ProtectedRoute from './components/Protectedroute';
+import ProfileSettings from './components/ProfileSettings';
 import Messaging from './components/Messaging';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
         <Route path="/messaging" element={
             <ProtectedRoute>
               <Messaging />

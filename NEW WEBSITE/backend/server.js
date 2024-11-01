@@ -28,7 +28,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Use authentication routes
-app.use('/api/routes', authRoutes);  // Ensure your auth routes are set up
+app.use('/api/auth', authRoutes);  // Ensure your auth routes are set up
 
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../frontend/public'))); //get index page

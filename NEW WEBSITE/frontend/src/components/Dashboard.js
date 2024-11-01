@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import MyCalendar from './CalendarDays'; // Import your CalendarDays component
 import ProfessorCalendar from './ProfessorCalendar';
 
@@ -8,6 +9,7 @@ function Dashboard() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard'); // State to manage current page
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -60,6 +62,11 @@ function Dashboard() {
     }
   };
 
+  const handleSignOut = () => {
+    localStorage.removeItem('token');  // Remove token from localStorage
+    navigate('/');  // Redirect to login page
+  };
+
   return (
     <div>
       <h1>Welcome to the Dashboard</h1>
@@ -69,6 +76,8 @@ function Dashboard() {
         <button onClick={() => setCurrentPage('dashboard')}>Dashboard</button>{' '}
         <button onClick={() => setCurrentPage('calendar')}>Calendar</button>{' '}
         <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>{' '}
+        <button onClick={() => navigate('/settings')}>Profile Settings</button>  {/* Profile Settings button */}
+        <button onClick={handleSignOut}>Sign Out</button>
         {/* Add other navigation buttons here as needed */}
       </nav>
 
