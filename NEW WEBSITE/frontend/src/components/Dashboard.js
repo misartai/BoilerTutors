@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import MyCalendar from './CalendarDays'; // Import your CalendarDays component
 import ProfessorCalendar from './ProfessorCalendar';
+import Messaging from './Messaging';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -49,6 +50,8 @@ function Dashboard() {
         return user && <ProfessorCalendar user={user} />;
       case 'calendar':
         return user && <MyCalendar user={user} />; // Pass the user object to MyCalendar
+      case 'messages':
+        return user && <Messaging user={user} />; //redirect user to Messages
       case 'dashboard':
       default:
         return (
@@ -69,6 +72,7 @@ function Dashboard() {
         <button onClick={() => setCurrentPage('dashboard')}>Dashboard</button>{' '}
         <button onClick={() => setCurrentPage('calendar')}>Calendar</button>{' '}
         <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>{' '}
+        <button onClick={() => setCurrentPage('messages')}>Messaging</button>{' '}
         {/* Add other navigation buttons here as needed */}
       </nav>
 
