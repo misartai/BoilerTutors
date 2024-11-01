@@ -44,20 +44,7 @@ router.post('/signup', async (req, res) => {
     };
 
     // Send confirmation email
-    const mailOptions = {
-      from: 'boilertutors420',
-      to: email,
-      subject: 'Email Verification Code',
-      text: `Your confirmation code is: ${confirmationCode}`
-    };
 
-    await transporter.sendMail(mailOptions);
-
-    res.status(200).send('Confirmation email sent');
-  } catch (err) {
-    console.error('Signup error:', err);
-    res.status(500).send('Failed to create user');
-  }
 });
 
 // Login route
@@ -274,7 +261,44 @@ const authenticate = (req, res, next) => {
     res.status(400).send('Invalid Token');
   }
 };
+// Function to send notification email
+const sendNotificationEmail = async (recipientEmail, messageContent, senderEmail) => {
+  const mailOptions = {
+    from: 'boilertutors420@gmail.com', // sender address
+    to: recipientEmail, // list of receivers
+    subject: 'New Message Notification', // Subject line
+    text: `You have received a new message from ${senderEmail}:\n\n${messageContent}`
+  };
 
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Notification email sent successfully');
+  } catch (error) {
+    console.error('Error sending notification email:', error);
+  }
+};
+
+module.exports = sendNotificationEmail;
+
+// Function to send notification email
+const sendAnnouncementEmail = async (recipientEmail, messageContent, senderEmail) => {
+  const mailOptions = {
+    from: 'boilertutors420@gmail.com', // sender address
+    to: recipientEmail, // list of receivers
+    subject: 'New Announcement Notification', // Subject line
+    text: `You have received a new Announcement from ${senderEmail}:\n\n${messageContent}`
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Notification email sent successfully');
+  } catch (error) {
+    console.error('Error sending notification email:', error);
+  }
+};
+
+module.exports = sendAnnouncementEmail;
+;
 // Route to send a message
 router.post('/api/messages', async (req, res) => {
   const { senderEmail, receiverEmail, content } = req.body;
@@ -289,6 +313,8 @@ router.post('/api/messages', async (req, res) => {
 
     // Save to MongoDB
     const savedMessage = await message.save();
+
+    await sendNotificationEmail(receiverEmail, content, senderEmail);
 
     res.status(201).json(savedMessage);
   } catch (err) {
@@ -344,11 +370,24 @@ router.get('/announcements', authenticate, async (req, res) => {
       receiverId: req.user.userId
     }).sort({ timestamp: -1 });
 
+    await sendAnnouncementEmail(receiverEmail, content, senderEmail);
+
     res.status(200).json(announcements);
   } catch (err) {
     console.error('Retrieve announcements error:', err);
     res.status(500).send('Failed to retrieve announcements');
   }
+});
+
+// Fetch all announcements
+app.get('/api/announcements', async (req, res) => {
+    try {
+        const announcements = await Message.find({ isAnnouncement: true });
+        res.json(announcements);
+    } catch (error) {
+        console.error('Error fetching announcements:', error);
+        res.status(500).send('Server Error');
+    }
 });
 
 module.exports = router;
