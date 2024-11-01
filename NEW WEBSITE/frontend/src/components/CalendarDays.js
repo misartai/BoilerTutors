@@ -26,6 +26,7 @@ export default function MyCalendar({ user }) {
   const [eventTypeFilter, setEventTypeFilter] = useState('');
   const [studentEmails, setStudentEmails] = useState([]);
   const [psoEventNames, setPsoEventNames] = useState([]);
+  const [uniqueEventTypes, setUniqueEventTypes] = useState([]); // State for unique event types
 
   const generateTimeIntervals = (start, end) => {
     const intervals = [];
@@ -52,6 +53,10 @@ export default function MyCalendar({ user }) {
 
         const uniqueEventNames = [...new Set(data.map(event => event.title))];
         setPsoEventNames(uniqueEventNames);
+
+        // Extract unique event types
+        const eventTypes = [...new Set(data.map(event => event.extendedProps?.eventType))];
+        setUniqueEventTypes(eventTypes.filter(type => type)); // Filter out any undefined types
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -87,7 +92,6 @@ export default function MyCalendar({ user }) {
       return;
     }
 
-    // Create new event object
     const newEvent = {
       title: formData.title,
       start: `${formData.date}T${formData.startTime}`,
@@ -109,7 +113,6 @@ export default function MyCalendar({ user }) {
         return response.json();
       })
       .then((data) => {
-        // Update events state correctly
         setEvents(prevEvents => [
           ...prevEvents,
           {
@@ -190,9 +193,11 @@ export default function MyCalendar({ user }) {
               <label style={{ marginRight: '5px', marginLeft: '10px' }}>Filter by Event Type:</label>
               <select onChange={(e) => setEventTypeFilter(e.target.value)} value={eventTypeFilter}>
                 <option value="">All Events</option>
-                <option value="pso">PSO</option>
-                <option value="office">Office</option>
-                <option value="appointment">Appointment</option>
+                {uniqueEventTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
               </select>
 
               <label style={{ marginRight: '5px', marginLeft: '10px' }}>Filter by Event Name:</label>

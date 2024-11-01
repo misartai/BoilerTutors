@@ -7,6 +7,7 @@ import RateTutor from './RateTutor'; // Import your RateTutor component
 import ReportAccount from './ReportAccount';
 import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
+import ContactProf from './ContactProf'
 
 
 function Dashboard() {
@@ -65,6 +66,8 @@ function Dashboard() {
         return <ReportAccount />;
       case 'payLedger':
         return <PayLedger />;
+      case 'contactProf':
+        return <ContactProf />
   
       case 'dashboard':
       default:
@@ -88,6 +91,7 @@ function Dashboard() {
         <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>{' '}
         <button onClick={() => setCurrentPage('messages')}>Messaging</button>{' '}
         <button onClick={() => setCurrentPage('rateTutor')}>Rate Tutor</button>{' '}
+        <button onClick={() => setCurrentPage('contactProf')}>Contact Professors</button>{' '}
         {/* Show the Confirm Payment button only if the user is a tutor */}
         {user.isTutor && (
           <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>

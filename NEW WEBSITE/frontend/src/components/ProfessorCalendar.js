@@ -44,13 +44,13 @@ export default function StaffCalendar({ user }) {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/events?userEmail=${userEmail}`);
+        const response = await fetch(`http://localhost:5000/api/events?staffEmail=${userEmail}`); // Adjust URL to filter events by staffEmail
         if (!response.ok) {
           throw new Error('Failed to fetch events');
         }
         const data = await response.json();
         setEvents(data);
-
+        
         // Extract unique student emails for staff view filtering
         const emails = Array.from(new Set(data.map(event => event.email)));
         setStudentEmails(emails);
@@ -116,17 +116,20 @@ export default function StaffCalendar({ user }) {
         return response.json();
       })
       .then((data) => {
-        setEvents([...events, {
-          title: data.title,
-          start: data.start,
-          end: data.end,
-          extendedProps: {
-            email: data.email,
-            staffEmail: data.staffEmail, // Add staffEmail to extendedProps
-            notifyTime: data.notifyTime,
-            optInNotifications: data.optInNotifications,
+        setEvents(prevEvents => [
+          ...prevEvents,
+          {
+            title: data.title,
+            start: data.start,
+            end: data.end,
+            extendedProps: {
+              email: data.email,
+              staffEmail: data.staffEmail, // Add staffEmail to extendedProps
+              notifyTime: data.notifyTime,
+              optInNotifications: data.optInNotifications,
+            },
           },
-        }]);
+        ]);
         setFormData({
           title: '',
           date: formData.date,
@@ -143,7 +146,6 @@ export default function StaffCalendar({ user }) {
         alert('There was an error booking the appointment. Please try again.');
       });
   };
-  
 
   // Filter events by selected staff and student email
   const filteredEvents = events.filter(event => {
@@ -183,7 +185,9 @@ export default function StaffCalendar({ user }) {
               <select onChange={(e) => setStudentFilter(e.target.value)} value={studentFilter}>
                 <option value="">All Students</option>
                 {studentEmails.map((email) => (
-                  <option key={email} value={email}>{email}</option>
+                  <option key={email} value={email}>
+                    {email}
+                  </option>
                 ))}
               </select>
             </div>

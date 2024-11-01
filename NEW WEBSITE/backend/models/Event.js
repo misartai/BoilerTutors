@@ -5,11 +5,12 @@ const eventSchema = new mongoose.Schema({
   start: { type: Date, required: true },
   end: { type: Date, required: true },
   email: { type: String, required: true },
-  tutorName: { type: String },
+  staffEmail: { type: String, required: true },
   notifyTime: { type: String },
-  optInNotifications: { type: Boolean, default: false },
-  eventType: { type: String, enum: ['appointment', 'pso', 'office'], default: 'appointment' }, // New field for event type
+  optInNotifications: { type: Boolean },
+  eventType: { type: String, required: true }, // Ensure this line is included
 });
 
-module.exports = mongoose.model('Event', eventSchema);
+const Event = mongoose.model('Event', eventSchema);
 
+module.exports = Event;
