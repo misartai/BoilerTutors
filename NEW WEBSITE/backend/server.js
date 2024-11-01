@@ -46,13 +46,20 @@ const reviewSchema = new mongoose.Schema({
 const tutorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   reviews: [reviewSchema],
+  averageRating: { type: Number, default: 0 }, // Add averageRating field
 });
 
-// Virtual property to calculate average rating
-tutorSchema.virtual('averageRating').get(function () {
+// Helper function to calculate average rating
+tutorSchema.methods.calculateAverageRating = function () {
   if (this.reviews.length === 0) return 0;
   const totalRating = this.reviews.reduce((acc, review) => acc + review.rating, 0);
-  return (totalRating / this.reviews.length).toFixed(2);
+  return totalRating / this.reviews.length;
+};
+
+// Pre-save hook to update average rating
+tutorSchema.pre('save', function (next) {
+  this.averageRating = this.calculateAverageRating();
+  next();
 });
 
 tutorSchema.set('toJSON', { virtuals: true });
@@ -72,7 +79,7 @@ app.get('/api/tutors', async (req, res) => {
 });
 
 // Fetch reviews for a specific tutor
-app.get('/api/tutors/:tutorId/reviews', async (req, res) => {
+app.get('/tutors/:tutorId/reviews', async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.tutorId);
     res.json(tutor.reviews);
@@ -97,15 +104,170 @@ app.post('/api/tutors/:tutorId/reviews', async (req, res) => {
     const tutor = await Tutor.findById(req.params.tutorId);
     const newReview = {
       rating: req.body.rating,
-      content: req.body.content
+      content: req.body.content,
     };
     tutor.reviews.push(newReview);
+    
+    // Update the average rating before saving
+    tutor.averageRating = tutor.calculateAverageRating();
     await tutor.save();
+    
     res.json(newReview);
   } catch (error) {
     res.status(500).json({ error: 'Error adding review' });
   }
 });
+
+// ----- Payment Functionality -----
+
+// Schema for payments
+const paymentSchema = new mongoose.Schema({
+  studentName: { type: String, required: true },
+  payments: [
+    {
+      status: { type: String, required: true },
+      timestamp: { type: String, required: true },
+      reason: { type: String, default: '' }, // Reason for denial if applicable
+    },
+  ],
+});
+
+const Payment = mongoose.model('Payment', paymentSchema);
+
+// Route to fetch all students (if not already created)
+app.get('/students', async (req, res) => {
+  // Replace with actual student fetching logic
+  const students = await User.find({ accountType: 'student' });
+  res.json(students);
+});
+
+app.post('/send-email', async (req, res) => {
+  const { subject, message, studentName } = req.body;
+
+  const mailOptions = {
+      from: process.env.EMAIL,
+      to: studentName, // Assuming you have the student's email in the database
+      subject: subject,
+      text: message,
+  };
+
+  try {
+      await transporter.sendMail(mailOptions);
+      res.json({ message: 'Email sent successfully' });
+  } catch (error) {
+      console.error('Error sending email:', error);
+      res.status(500).json({ error: 'Error sending email' });
+  }
+});
+
+
+app.post('/students/:studentName/payments', async (req, res) => {
+  try {
+      const { status, timestamp, reason } = req.body;
+      const studentName = req.params.studentName;
+
+      let paymentRecord = await Payment.findOne({ studentName });
+
+      if (!paymentRecord) {
+          paymentRecord = new Payment({ studentName, payments: [] });
+      }
+
+      // Prepare new payment entry
+      const newEntry = { status, timestamp, reason };
+      paymentRecord.payments.push(newEntry);
+      await paymentRecord.save();
+
+      // Send email notification if payment status is updated
+      const subject = `Payment Status Updated: ${status}`;
+      const message = `The payment status for ${studentName} has been updated to ${status} on ${timestamp}. Reason: ${reason || 'N/A'}.`;
+      await sendEmail(subject, message); // Assuming sendEmail function is defined above
+
+      res.json({ message: 'Payment status updated', paymentRecord });
+  } catch (error) {
+      console.error('Error updating payment status:', error);
+      res.status(500).send('Error updating payment status');
+  }
+});
+
+
+const reportSchema = new mongoose.Schema({
+  studentId: { type: String, required: true },
+  reports: [
+    {
+      trackingId: { type: String, required: true },
+      details: { type: String, required: true },
+      date: { type: Date, default: Date.now }
+    }
+  ]
+});
+
+const Report = mongoose.model('Report', reportSchema);
+app.post('/api/reports', async (req, res) => {
+  const { studentId, details } = req.body;
+  const trackingId = uuidv4();
+
+  try {
+    // Find or create a report entry for the student
+    let reportEntry = await Report.findOne({ studentId });
+    if (!reportEntry) {
+      reportEntry = new Report({ studentId, reports: [] });
+    }
+
+    // Add the new report to the reports array
+    reportEntry.reports.push({ trackingId, details });
+
+    // Save the updated report entry
+    await reportEntry.save();
+
+    res.status(201).json({ trackingId, details });
+  } catch (error) {
+    console.error('Error submitting report:', error);
+    res.status(500).json({ error: 'Failed to submit report' });
+  }
+});
+app.get('/api/reports/:studentId', async (req, res) => {
+  const { studentId } = req.params;
+
+  try {
+    const reportEntry = await Report.findOne({ studentId });
+    if (!reportEntry) {
+      return res.status(404).json({ error: 'No reports found for this student' });
+    }
+
+    res.json(reportEntry.reports); // Return the reports array for the student
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ error: 'Error fetching reports' });
+  }
+});
+app.get('/api/reports/details/:trackingId', async (req, res) => {
+  const { trackingId } = req.params;
+
+  try {
+    const reportEntry = await Report.findOne({ 'reports.trackingId': trackingId });
+
+    if (!reportEntry) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const report = reportEntry.reports.find(report => report.trackingId === trackingId);
+    res.json(report);
+  } catch (error) {
+    console.error('Error fetching report details:', error);
+    res.status(500).json({ error: 'Error fetching report details' });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
 
 // ----- Event Functionality -----
 
