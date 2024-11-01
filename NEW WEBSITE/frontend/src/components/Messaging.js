@@ -10,6 +10,20 @@ export default function Messages({ user }) {
   const [view, setView] = useState('messages');
 
   useEffect(() => {
+      const handleBeforeExit = (event) => {
+        if (messageContent && selectedContact) {
+            handleSaveDraft();
+        }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeExit);
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeExit);
+      };
+}, [messageContent, selectedContact]);
+
+useEffect(() => {
       const fetchMessages = async () => {
           try {
               const response = await fetch(`http://localhost:5000/api/messages?userEmail=${userEmail}`);
@@ -105,6 +119,40 @@ export default function Messages({ user }) {
   const filteredMessages = messages.filter(message => {
     return selectedContact ? message.recipientEmail === selectedContact || message.senderEmail === selectedContact : true;
   });
+
+const handleSaveDraft = async () => {
+  if (!messageContent || !selectedContact) {
+    alert('Please enter a message and select a recipient.');
+    return;
+  }
+
+  const draft = {
+    senderEmail: userEmail,
+    recipientEmail: selectedContact,
+    content: messageContent,
+  };
+
+  try {
+    const response = await fetch('http://localhost:5000/api/drafts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(draft),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save draft');
+    }
+
+    const savedDraft = await response.json();
+    console.log('Draft saved successfully:', savedDraft);
+    alert('Draft saved successfully!');
+  } catch (error) {
+    console.error('Error saving draft:', error);
+    alert('There was an error saving the draft. Please try again.');
+  }
+};
 
   return (
     <div className="main">

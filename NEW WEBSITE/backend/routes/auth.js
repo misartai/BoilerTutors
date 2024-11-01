@@ -390,4 +390,34 @@ app.get('/api/announcements', async (req, res) => {
     }
 });
 
+// Route to save a draft
+router.post('/', async (req, res) => {
+  const { senderEmail, recipientEmail, content } = req.body;
+
+  const draft = new Draft({
+    senderEmail,
+    recipientEmail,
+    content,
+  });
+
+  try {
+    const savedDraft = await draft.save();
+    res.status(201).json(savedDraft);
+  } catch (error) {
+    console.error('Error saving draft:', error);
+    res.status(500).json({ message: 'Error saving draft' });
+  }
+});
+
+// Route to get drafts (optional, if you want to retrieve drafts later)
+router.get('/:userEmail', async (req, res) => {
+  try {
+    const drafts = await Draft.find({ senderEmail: req.params.userEmail });
+    res.status(200).json(drafts);
+  } catch (error) {
+    console.error('Error fetching drafts:', error);
+    res.status(500).json({ message: 'Error fetching drafts' });
+  }
+});
+
 module.exports = router;
