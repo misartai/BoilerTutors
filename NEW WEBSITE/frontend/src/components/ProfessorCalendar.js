@@ -5,38 +5,42 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import './Calendar.css';
 
-export default function MyCalendar({ user }) {
-  const { email: userEmail, isTutor } = user;
+export default function StaffCalendar({ user }) {
+  const { email: userEmail } = user; // Destructure email from user object
   const [events, setEvents] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
     startTime: '',
     endTime: '',
-    email: userEmail,
-    tutorEmail: '',
+    email: userEmail, // Pre-fill the email field with userEmail
+    staffEmail: '', // Use staffEmail instead of tutorName
     notifyTime: '1 hour',
     optInNotifications: true,
   });
-  const [tutors, setTutors] = useState([]);
-  const [selectedTutor, setSelectedTutor] = useState('');
-  const [viewMode, setViewMode] = useState('student');
+  const [staffMembers, setStaffMembers] = useState([]); // State to store staff members
+  const [selectedStaff, setSelectedStaff] = useState('');
+  const [viewMode, setViewMode] = useState('student'); // State to toggle between views
   const [studentFilter, setStudentFilter] = useState('');
-  const [studentEmails, setStudentEmails] = useState([]);
+  const [studentEmails, setStudentEmails] = useState([]); // State to store unique student emails
 
+  // Generate time intervals for selection
   const generateTimeIntervals = (start, end) => {
     const intervals = [];
     let currentTime = new Date(`1970-01-01T${start}:00`);
     const endTime = new Date(`1970-01-01T${end}:00`);
+
     while (currentTime <= endTime) {
       intervals.push(currentTime.toTimeString().substring(0, 5));
       currentTime.setMinutes(currentTime.getMinutes() + 30);
     }
+
     return intervals;
   };
 
   const timeOptions = generateTimeIntervals('08:00', '20:00');
 
+  // Fetch events and staff from the server when the component mounts
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -46,6 +50,8 @@ export default function MyCalendar({ user }) {
         }
         const data = await response.json();
         setEvents(data);
+
+        // Extract unique student emails for staff view filtering
         const emails = Array.from(new Set(data.map(event => event.email)));
         setStudentEmails(emails);
       } catch (error) {
@@ -53,23 +59,24 @@ export default function MyCalendar({ user }) {
       }
     };
 
-    const fetchTutors = async () => {
+    const fetchStaffMembers = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/tutors');
+        const response = await fetch('http://localhost:5000/api/staff'); // Adjust the URL to fetch staff members
         if (!response.ok) {
-          throw new Error('Failed to fetch tutors');
+          throw new Error('Failed to fetch staff members');
         }
         const data = await response.json();
-        setTutors(data);
+        setStaffMembers(data);
       } catch (error) {
-        console.error('Error fetching tutors:', error);
+        console.error('Error fetching staff members:', error);
       }
     };
 
     fetchEvents();
-    fetchTutors();
+    fetchStaffMembers();
   }, [userEmail]);
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -78,6 +85,7 @@ export default function MyCalendar({ user }) {
     });
   };
 
+  // Handle form submission to add a new event
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -91,8 +99,7 @@ export default function MyCalendar({ user }) {
       start: `${formData.date}T${formData.startTime}`,
       end: `${formData.date}T${formData.endTime}`,
       email: formData.email,
-      userEmail: formData.email,
-      tutorName: formData.tutorEmail,
+      staffEmail: formData.staffEmail, // Use the selected staff member's email
       notifyTime: formData.notifyTime,
       optInNotifications: formData.optInNotifications,
     };
@@ -111,24 +118,14 @@ export default function MyCalendar({ user }) {
         return response.json();
       })
       .then((data) => {
-        setEvents([...events, {
-          title: data.title,
-          start: data.start,
-          end: data.end,
-          extendedProps: {
-            email: data.email,
-            tutorName: data.tutorName,
-            notifyTime: data.notifyTime,
-            optInNotifications: data.optInNotifications,
-          },
-        }]);
+        setEvents([...events, data]);
         setFormData({
           title: '',
           date: formData.date,
           startTime: '',
           endTime: '',
-          email: userEmail,
-          tutorEmail: '',
+          email: userEmail, // Reset to userEmail
+          staffEmail: '', // Reset the staff email
           notifyTime: '1 hour',
           optInNotifications: true,
         });
@@ -139,49 +136,39 @@ export default function MyCalendar({ user }) {
       });
   };
 
+  // Filter events by selected staff and student email
   const filteredEvents = events.filter(event => {
-    const matchesTutor = selectedTutor ? event.extendedProps.tutorName === selectedTutor : true;
-    const matchesStudent = studentFilter ? event.email === studentFilter : true;
-    return matchesTutor && matchesStudent;
+    const matchesStaff = selectedStaff ? event.extendedProps.staffEmail === selectedStaff : true;
+    const matchesStudent = studentFilter ? event.email === studentFilter : true; // Match email exactly
+    return matchesStaff && matchesStudent;
   });
-
-  // Custom function to render events with start and end times
-  const renderEventContent = (eventInfo) => {
-    const startTime = eventInfo.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const endTime = eventInfo.event.end ? eventInfo.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-    return (
-      <div>
-        <b>{eventInfo.event.title}</b>
-        <div>{startTime} - {endTime}</div>
-      </div>
-    );
-  };
 
   return (
     <div className="calendar-container">
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+        {/* Filters positioned directly above the calendar */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px', width: '100%' }}>
           <div style={{ marginRight: '20px' }}>
             <label style={{ marginRight: '5px' }}>View Mode:</label>
             <select onChange={(e) => setViewMode(e.target.value)} value={viewMode}>
               <option value="student">Student View</option>
-              {isTutor && <option value="tutor">Tutor View</option>}
+              <option value="staff">Staff View</option>
             </select>
           </div>
   
           {viewMode === 'student' && (
             <div style={{ marginRight: '20px' }}>
-              <label style={{ marginRight: '5px' }}>Filter by Tutor:</label>
-              <select onChange={(e) => setSelectedTutor(e.target.value)} value={selectedTutor}>
-                <option value="">All Tutors</option>
-                {tutors.map((tutor) => (
-                  <option key={tutor._id} value={tutor.email}>{tutor.name} ({tutor.email})</option>
+              <label style={{ marginRight: '5px' }}>Filter by Staff:</label>
+              <select onChange={(e) => setSelectedStaff(e.target.value)} value={selectedStaff}>
+                <option value="">All Staff</option>
+                {staffMembers.map((staff) => (
+                  <option key={staff._id} value={staff.email}>{staff.name} ({staff.email})</option>
                 ))}
               </select>
             </div>
           )}
   
-          {viewMode === 'tutor' && (
+          {viewMode === 'staff' && (
             <div>
               <label style={{ marginRight: '5px' }}>Filter by Student Email:</label>
               <select onChange={(e) => setStudentFilter(e.target.value)} value={studentFilter}>
@@ -194,6 +181,7 @@ export default function MyCalendar({ user }) {
           )}
         </div>
   
+        {/* Calendar and booking form positioned side-by-side */}
         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <div className="calendar" style={{ flexGrow: 1 }}>
             <FullCalendar
@@ -202,8 +190,7 @@ export default function MyCalendar({ user }) {
               selectable={true}
               events={filteredEvents}
               dateClick={(info) => setFormData({ ...formData, date: info.dateStr })}
-              displayEventTime={true}
-              eventContent={renderEventContent} // Use custom render function for event display
+              displayEventTime={false}
               headerToolbar={{
                 left: 'today prev,next',
                 center: 'title',
@@ -227,16 +214,16 @@ export default function MyCalendar({ user }) {
                   />
                 </div>
                 <div>
-                  <label>Tutor Email:</label>
+                  <label>Staff Email:</label>
                   <select
-                    name="tutorEmail"
-                    value={formData.tutorEmail}
+                    name="staffEmail"
+                    value={formData.staffEmail}
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="">Select Tutor</option>
-                    {tutors.map((tutor) => (
-                      <option key={tutor._id} value={tutor.email}>{tutor.name} ({tutor.email})</option>
+                    <option value="">Select Staff</option>
+                    {staffMembers.map((staff) => (
+                      <option key={staff._id} value={staff.email}>{staff.name} ({staff.email})</option>
                     ))}
                   </select>
                 </div>
@@ -316,5 +303,5 @@ export default function MyCalendar({ user }) {
         </div>
       </div>
     </div>
-  );
+  );    
 }

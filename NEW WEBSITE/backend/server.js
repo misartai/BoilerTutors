@@ -55,10 +55,11 @@ tutorSchema.set('toJSON', { virtuals: true });
 // Tutor model
 const Tutor = mongoose.model('Tutor', tutorSchema);
 
-// Fetch all tutors (for dropdown)
+// Fetch all users who are tutors (for dropdown)
 app.get('/api/tutors', async (req, res) => {
   try {
-    const tutors = await Tutor.find();
+    // Fetch all users where isTutor is true
+    const tutors = await User.find({ isTutor: true }, 'name email'); // Retrieve only name and email fields
     res.json(tutors);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching tutors' });

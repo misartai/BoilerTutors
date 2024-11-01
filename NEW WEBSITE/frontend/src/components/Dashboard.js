@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import MyCalendar from './CalendarDays'; // Import your CalendarDays component
+import ProfessorCalendar from './ProfessorCalendar';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -44,6 +45,8 @@ function Dashboard() {
   // Function to render the appropriate component based on the current page
   const renderContent = () => {
     switch (currentPage) {
+      case 'professorCalendar':
+        return user && <ProfessorCalendar user={user} />;
       case 'calendar':
         return user && <MyCalendar user={user} />; // Pass the user object to MyCalendar
       case 'dashboard':
@@ -65,6 +68,7 @@ function Dashboard() {
       <nav>
         <button onClick={() => setCurrentPage('dashboard')}>Dashboard</button>{' '}
         <button onClick={() => setCurrentPage('calendar')}>Calendar</button>{' '}
+        <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>{' '}
         {/* Add other navigation buttons here as needed */}
       </nav>
 
