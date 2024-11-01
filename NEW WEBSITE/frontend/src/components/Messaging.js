@@ -1,18 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 
-export default function Messaging({user}) => {
+export default function Messaging({ user }) {
     function MessagingComponent({ userId }) {
         const { email: userEmail } = user;
         const [messages, setMessages] = useState([]);
         const [newMessage, setNewMessage] = useState("");
 
         useEffect(() => {
-            // Fetch messages when component mounts
-            axios.get(`/api/messages/user/${userId}`)
-                .then(response => setMessages(response.data))
-                .catch(error => console.error(error));
-        }, [userId]);
+            const fetchEvents = async () => {
+                  try {
+                    const response = await fetch(`http://localhost:5000/api/messages?userEmail=${userEmail}`);
+                    if (!response.ok) {
+                      throw new Error('Failed to fetch messages');
+                    }
+                    const data = await response.json();
+                    setEvents(data);
+
+                    // Extract unique student emails for staff view filtering
+                    const emails = Array.from(new Set(data.map(event => event.email)));
+                    setStudentEmails(emails);
+                  } catch (error) {
+                    console.error('Error fetching events:', error);
+                  }
+        };
 
         const sendMessage = () => {
             axios.post('/api/messages/send', {
