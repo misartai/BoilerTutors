@@ -392,6 +392,17 @@ router.get('/announcements', authenticate, async (req, res) => {
   }
 });
 
+// Endpoint to get all users
+router.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}); // Fetch all users
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+});
+
 // Fetch all announcements
 router.get('/api/announcements', async (req, res) => {
     try {
@@ -422,7 +433,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Route to get drafts (optional, if you want to retrieve drafts later)
+// Route to get drafts
 router.get('/:userEmail', async (req, res) => {
   try {
     const drafts = await Draft.find({ senderEmail: req.params.userEmail });
@@ -430,6 +441,30 @@ router.get('/:userEmail', async (req, res) => {
   } catch (error) {
     console.error('Error fetching drafts:', error);
     res.status(500).json({ message: 'Error fetching drafts' });
+  }
+});
+
+router.post('/', async (req, res) => {
+  const { senderEmail, recipientEmail, content } = req.body;
+
+  const newMessage = new Message({
+    senderEmail,
+    recipientEmail,
+    content,
+  });
+
+  try {
+    await newMessage.save();
+
+    // Send email notification
+    const subject = 'New Message Notification';
+    const text = `You have received a new message from ${senderEmail}: "${content}"`;
+    await sendEmail(recipientEmail, subject, text);
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
