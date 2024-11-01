@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const Messaging = () => {
+export default function Messaging({user}) => {
     function MessagingComponent({ userId }) {
+        const { email: userEmail } = user;
         const [messages, setMessages] = useState([]);
         const [newMessage, setNewMessage] = useState("");
 
