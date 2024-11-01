@@ -311,30 +311,6 @@ const sendAnnouncementEmail = async (recipientEmail, messageContent, senderEmail
 };
 
 module.exports = sendAnnouncementEmail;
-;
-// Route to send a message
-router.post('/api/messages', async (req, res) => {
-  const { senderEmail, receiverEmail, content } = req.body;
-
-  try {
-    // Create a new message
-    const message = new Message({
-      senderEmail,
-      receiverEmail,
-      content
-    });
-
-    // Save to MongoDB
-    const savedMessage = await message.save();
-
-    await sendNotificationEmail(receiverEmail, content, senderEmail);
-
-    res.status(201).json(savedMessage);
-  } catch (err) {
-    console.error('Error saving message:', err);
-    res.status(500).send('Failed to save message');
-  }
-});
 
 // Route to retrieve conversation history
 router.get('/history/:userId', authenticate, async (req, res) => {
@@ -448,24 +424,20 @@ router.post('/', async (req, res) => {
   const { senderEmail, recipientEmail, content } = req.body;
 
   const newMessage = new Message({
-    senderEmail,
-    recipientEmail,
+    senderId,
+    receiverId,
     content,
+    timestamp: new Date(),
+    isAnnouncement: false,
+    isRead: false
   });
 
-  try {
-    await newMessage.save();
-
-    // Send email notification
-    const subject = 'New Message Notification';
-    const text = `You have received a new message from ${senderEmail}: "${content}"`;
-    await sendEmail(recipientEmail, subject, text);
-
-    res.status(201).json(newMessage);
-  } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).send('Internal Server Error');
-  }
+  const savedMessage = await message.save();
+      res.status(201).json(savedMessage);
+    } catch (error) {
+      console.error('Error saving message:', error);
+      res.status(500).json({ message: 'Failed to save message' });
+    }
 });
 
 module.exports = router;

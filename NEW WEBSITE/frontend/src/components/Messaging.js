@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function Messages({ user }) {
-  const { email: userEmail } = user;
+  const { email: userEmail, accountType } = user;
   const [messages, setMessages] = useState([
     {senderEmail: 'misartai@purdue.edu', recipientEmail: "ashahu@purdue.edu", content: 'Hello!', timestamp: new Date() },
     {senderEmail: 'ashahu@purdue.edu', recipientEmail: 'misartai@purdue.edu', content: 'How are you?', timestamp: new Date() },
@@ -15,7 +15,9 @@ export default function Messages({ user }) {
   const [selectedContact, setSelectedContact] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [announcements, setAnnouncements] = useState([]);
+  const [drafts, setDrafts] = useState([]);
   const [view, setView] = useState('messages');
+  const [announcementContent, setAnnouncementContent] = useState('');
 
   useEffect(() => {
     const handleBeforeExit = (event) => {
@@ -71,7 +73,7 @@ export default function Messages({ user }) {
     fetchAnnouncements();
   }, []);
 
-  const handleSaveDraft = async () => {
+  const handleSaveDraft = () => {
       if (!messageContent || !selectedContact) {
         return; // No draft saved if there's no message content or selected contact
       }
@@ -80,40 +82,33 @@ export default function Messages({ user }) {
         senderEmail: userEmail,
         recipientEmail: selectedContact,
         content: messageContent,
+        timestamp: new Date(),
       };
 
-      try {
-        const response = await fetch('http://localhost:5000/api/drafts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(draft),
-        });
-
-        if (!response.ok) throw new Error('Failed to save draft');
-        console.log('Draft saved successfully');
-      } catch (error) {
-        console.error('Error saving draft:', error);
-      }
+      setDrafts((prevDrafts) => [...prevDrafts, draft]); // Save to drafts
+      setMessageContent(''); // Clear message input after saving
     };
+
+  const filteredMessages = messages.filter((message) =>
+    selectedContact ? message.recipientEmail === selectedContact || message.senderEmail === selectedContact : true
+  );
+
+  const formatTimestamp = (timestamp) => {
+      const date = new Date(timestamp);
+      return date.toLocaleString(); // Formats to local date and time
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    console.log('Sending message...'); // Log to check if function is called
-    console.log('Message content:', messageContent); // Log message content
-    console.log('Recipient:', selectedContact); // Log selected contact
-
     if (!messageContent) {
       alert('Please enter a message.');
       return;
     }
 
     const newMessage = {
-      senderId: userEmail,
-      receiverId: selectedContact,
+      senderEmail: userEmail,
+      recipientEmail: selectedContact,
       content: messageContent,
-      timestamp: new Date(),
-      isRead: false,
-      isAnnouncement: false,
     };
 
     try {
@@ -127,20 +122,45 @@ export default function Messages({ user }) {
       const savedMessage = await response.json();
       setMessages([...messages, savedMessage]);
       setMessageContent('');
-
     } catch (error) {
       console.error('Error sending message:', error);
       alert('There was an error sending the message. Please try again.');
     }
   };
 
-  const filteredMessages = messages.filter((message) =>
-    selectedContact ? message.recipientEmail === selectedContact || message.senderEmail === selectedContact : true
-  );
+  const loadDraft = (draft) => {
+    setMessageContent(draft.content);
+    setSelectedContact(draft.recipientEmail);
+  };
 
-  const formatTimestamp = (timestamp) => {
-      const date = new Date(timestamp);
-      return date.toLocaleString(); // Formats to local date and time
+  const handleSendAnnouncement = async (e) => {
+    e.preventDefault();
+    if (!announcementContent) {
+      alert('Please enter an announcement.');
+      return;
+    }
+
+    const newAnnouncement = {
+      senderEmail: userEmail,
+      content: announcementContent,
+      isAnnouncement: true, // Set this flag to identify as an announcement
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAnnouncement),
+      });
+
+      if (!response.ok) throw new Error('Failed to send announcement');
+      const savedAnnouncement = await response.json();
+      setAnnouncements([...announcements, savedAnnouncement]);
+      setAnnouncementContent('');
+    } catch (error) {
+      console.error('Error sending announcement:', error);
+      alert('There was an error sending the announcement. Please try again.');
+    }
   };
 
  return (
