@@ -85,15 +85,13 @@ export default function StaffCalendar({ user }) {
     });
   };
 
-  // Handle form submission to add a new event
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!formData.endTime) {
       alert('Please select an end time.');
       return;
     }
-
+  
     const newEvent = {
       title: formData.title,
       start: `${formData.date}T${formData.startTime}`,
@@ -103,7 +101,7 @@ export default function StaffCalendar({ user }) {
       notifyTime: formData.notifyTime,
       optInNotifications: formData.optInNotifications,
     };
-
+  
     fetch('http://localhost:5000/api/events', {
       method: 'POST',
       headers: {
@@ -118,13 +116,23 @@ export default function StaffCalendar({ user }) {
         return response.json();
       })
       .then((data) => {
-        setEvents([...events, data]);
+        setEvents([...events, {
+          title: data.title,
+          start: data.start,
+          end: data.end,
+          extendedProps: {
+            email: data.email,
+            staffEmail: data.staffEmail, // Add staffEmail to extendedProps
+            notifyTime: data.notifyTime,
+            optInNotifications: data.optInNotifications,
+          },
+        }]);
         setFormData({
           title: '',
           date: formData.date,
           startTime: '',
           endTime: '',
-          email: userEmail, // Reset to userEmail
+          email: userEmail,
           staffEmail: '', // Reset the staff email
           notifyTime: '1 hour',
           optInNotifications: true,
@@ -135,6 +143,7 @@ export default function StaffCalendar({ user }) {
         alert('There was an error booking the appointment. Please try again.');
       });
   };
+  
 
   // Filter events by selected staff and student email
   const filteredEvents = events.filter(event => {
