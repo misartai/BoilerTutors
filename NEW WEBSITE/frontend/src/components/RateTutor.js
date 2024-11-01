@@ -15,7 +15,7 @@ const RateTutor = () => {
   useEffect(() => {
     const fetchTutors = async () => {
       try {
-        const response = await axios.get('http://localhost:8081/tutors');
+        const response = await axios.get('http://localhost:5000/tutors');
         setTutors(response.data);
       } catch (error) {
         console.error('Error fetching tutors:', error);
@@ -31,11 +31,11 @@ const RateTutor = () => {
       const fetchTutorData = async () => {
         try {
           // Fetch tutor reviews
-          const reviewsResponse = await axios.get(`http://localhost:8081/tutors/${selectedTutor}/reviews`);
+          const reviewsResponse = await axios.get(`http://localhost:5000/tutors/${selectedTutor}/reviews`);
           setReviews(reviewsResponse.data);
 
           // Fetch tutor information to get average rating
-          const tutorResponse = await axios.get(`http://localhost:8081/tutors/${selectedTutor}`);
+          const tutorResponse = await axios.get(`http://localhost:5000/tutors/${selectedTutor}`);
           setAverageRating(tutorResponse.data.averageRating);
         } catch (error) {
           console.error('Error fetching reviews or tutor data:', error);
@@ -60,13 +60,13 @@ const RateTutor = () => {
 
       try {
         // Submit the new review
-        await axios.post(`http://localhost:8081/tutors/${selectedTutor}/reviews`, newReview);
+        await axios.post(`http://localhost:5000/tutors/${selectedTutor}/reviews`, newReview);
         
         // Refresh the reviews and average rating after submitting
-        const reviewsResponse = await axios.get(`http://localhost:8081/tutors/${selectedTutor}/reviews`);
+        const reviewsResponse = await axios.get(`http://localhost:5000/tutors/${selectedTutor}/reviews`);
         setReviews(reviewsResponse.data);
 
-        const tutorResponse = await axios.get(`http://localhost:8081/tutors/${selectedTutor}`);
+        const tutorResponse = await axios.get(`http://localhost:5000/tutors/${selectedTutor}`);
         setAverageRating(tutorResponse.data.averageRating);
       } catch (error) {
         console.error('Error submitting review:', error);

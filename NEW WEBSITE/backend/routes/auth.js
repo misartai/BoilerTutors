@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
+const Message = require('../models/Message');
 const router = express.Router();
 const adminEmail = 'aryanshahu13@gmail.com';
 let tempUsers = {};  // Temporary storage for users who haven't confirmed email
@@ -24,40 +25,40 @@ router.post('/signup', async (req, res) => {
   const { name, email, password, accountType, isTutor } = req.body;
 
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).send('Email already registered');
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).send('Email already registered');
+      }
+
+      // Generate a confirmation code
+      const confirmationCode = generateCode();
+
+      // Store user temporarily
+      tempUsers[email] = {
+        name,
+        email,
+        password: await bcrypt.hash(password, 10),
+        accountType,
+        isTutor,
+        confirmationCode
+      };
+
+      // Send confirmation email
+      const mailOptions = {
+        from: 'boilertutors420',
+        to: email,
+        subject: 'Email Verification Code',
+        text: `Your confirmation code is: ${confirmationCode}`
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      res.status(200).send('Confirmation email sent');
+    } catch (err) {
+      console.error('Signup error:', err);
+      res.status(500).send('Failed to create user');
     }
-
-    // Generate a confirmation code
-    const confirmationCode = generateCode();
-
-    // Store user temporarily
-    tempUsers[email] = {
-      name,
-      email,
-      password: await bcrypt.hash(password, 10),
-      accountType,
-      isTutor,
-      confirmationCode
-    };
-
-    // Send confirmation email
-    const mailOptions = {
-      from: 'boilertutors420',
-      to: email,
-      subject: 'Email Verification Code',
-      text: `Your confirmation code is: ${confirmationCode}`
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    res.status(200).send('Confirmation email sent');
-  } catch (err) {
-    console.error('Signup error:', err);
-    res.status(500).send('Failed to create user');
-  }
-});
+  });
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -329,6 +330,186 @@ router.get('/me', async (req, res) => {
     console.error('Error fetching user data:', err);
     res.status(500).send('Failed to fetch user data');
   }
+});
+
+// Middleware to authenticate the user via JWT
+const authenticate = (req, res, next) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+  if (!token) return res.status(401).send('Access Denied');
+
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified; // Attach user data to req for later use
+    next();
+  } catch (err) {
+    res.status(400).send('Invalid Token');
+  }
+};
+// Function to send notification email
+const sendNotificationEmail = async (recipientEmail, messageContent, senderEmail) => {
+  const mailOptions = {
+    from: 'boilertutors420@gmail.com', // sender address
+    to: recipientEmail, // list of receivers
+    subject: 'New Message Notification', // Subject line
+    text: `You have received a new message from ${senderEmail}:\n\n${messageContent}`
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Notification email sent successfully');
+  } catch (error) {
+    console.error('Error sending notification email:', error);
+  }
+};
+
+module.exports = sendNotificationEmail;
+
+// Function to send notification email
+const sendAnnouncementEmail = async (recipientEmail, messageContent, senderEmail) => {
+  const mailOptions = {
+    from: 'boilertutors420@gmail.com', // sender address
+    to: recipientEmail, // list of receivers
+    subject: 'New Announcement Notification', // Subject line
+    text: `You have received a new Announcement from ${senderEmail}:\n\n${messageContent}`
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Notification email sent successfully');
+  } catch (error) {
+    console.error('Error sending notification email:', error);
+  }
+};
+
+module.exports = sendAnnouncementEmail;
+
+// Route to retrieve conversation history
+router.get('/history/:userId', authenticate, async (req, res) => {
+  const { userId: otherUserId } = req.params;
+
+  try {
+    const userId = req.user.userId;
+
+    // Fetch messages between the authenticated user and the other user
+    const messages = await Message.find({
+      $or: [
+        { senderId: userId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: userId }
+      ]
+    }).sort({ timestamp: 1 });
+
+    res.status(200).json(messages);
+  } catch (err) {
+    console.error('Retrieve history error:', err);
+    res.status(500).send('Failed to retrieve conversation history');
+  }
+});
+
+// Route to mark messages as read
+router.post('/mark-read', authenticate, async (req, res) => {
+  const { messageIds } = req.body;
+
+  try {
+    await Message.updateMany(
+      { _id: { $in: messageIds }, receiverId: req.user.userId },
+      { $set: { isRead: true } }
+    );
+
+    res.status(200).send('Messages marked as read');
+  } catch (err) {
+    console.error('Mark read error:', err);
+    res.status(500).send('Failed to mark messages as read');
+  }
+});
+
+// Route to retrieve announcements (if stored as messages with isAnnouncement flag)
+router.get('/announcements', authenticate, async (req, res) => {
+  try {
+    const announcements = await Message.find({
+      isAnnouncement: true,
+      receiverId: req.user.userId
+    }).sort({ timestamp: -1 });
+
+    await sendAnnouncementEmail(receiverEmail, content, senderEmail);
+
+    res.status(200).json(announcements);
+  } catch (err) {
+    console.error('Retrieve announcements error:', err);
+    res.status(500).send('Failed to retrieve announcements');
+  }
+});
+
+// Endpoint to get all users
+router.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}); // Fetch all users
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+});
+
+// Fetch all announcements
+router.get('/api/announcements', async (req, res) => {
+    try {
+        const announcements = await Message.find({ isAnnouncement: true });
+        res.json(announcements);
+    } catch (error) {
+        console.error('Error fetching announcements:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Route to save a draft
+router.post('/', async (req, res) => {
+  const { senderEmail, recipientEmail, content } = req.body;
+
+  const draft = new Draft({
+    senderEmail,
+    recipientEmail,
+    content,
+  });
+
+  try {
+    const savedDraft = await draft.save();
+    res.status(201).json(savedDraft);
+  } catch (error) {
+    console.error('Error saving draft:', error);
+    res.status(500).json({ message: 'Error saving draft' });
+  }
+});
+
+// Route to get drafts
+router.get('/:userEmail', async (req, res) => {
+  try {
+    const drafts = await Draft.find({ senderEmail: req.params.userEmail });
+    res.status(200).json(drafts);
+  } catch (error) {
+    console.error('Error fetching drafts:', error);
+    res.status(500).json({ message: 'Error fetching drafts' });
+  }
+});
+
+router.post('/', async (req, res) => {
+  const { senderEmail, recipientEmail, content } = req.body;
+
+  const newMessage = new Message({
+    senderId,
+    receiverId,
+    content,
+    timestamp: new Date(),
+    isAnnouncement: false,
+    isRead: false
+  });
+
+  const savedMessage = await message.save();
+    try {
+      res.status(201).json(savedMessage);
+    } catch (error) {
+      console.error('Error saving message:', error);
+      res.status(500).json({ message: 'Failed to save message' });
+    }
 });
 
 module.exports = router;

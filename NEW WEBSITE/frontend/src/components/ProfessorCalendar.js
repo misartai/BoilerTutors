@@ -44,13 +44,13 @@ export default function StaffCalendar({ user }) {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/events?userEmail=${userEmail}`);
+        const response = await fetch(`http://localhost:5000/api/events?staffEmail=${userEmail}`); // Adjust URL to filter events by staffEmail
         if (!response.ok) {
           throw new Error('Failed to fetch events');
         }
         const data = await response.json();
         setEvents(data);
-
+        
         // Extract unique student emails for staff view filtering
         const emails = Array.from(new Set(data.map(event => event.email)));
         setStudentEmails(emails);
@@ -85,15 +85,13 @@ export default function StaffCalendar({ user }) {
     });
   };
 
-  // Handle form submission to add a new event
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!formData.endTime) {
       alert('Please select an end time.');
       return;
     }
-
+  
     const newEvent = {
       title: formData.title,
       start: `${formData.date}T${formData.startTime}`,
@@ -103,7 +101,7 @@ export default function StaffCalendar({ user }) {
       notifyTime: formData.notifyTime,
       optInNotifications: formData.optInNotifications,
     };
-
+  
     fetch('http://localhost:5000/api/events', {
       method: 'POST',
       headers: {
@@ -118,13 +116,26 @@ export default function StaffCalendar({ user }) {
         return response.json();
       })
       .then((data) => {
-        setEvents([...events, data]);
+        setEvents(prevEvents => [
+          ...prevEvents,
+          {
+            title: data.title,
+            start: data.start,
+            end: data.end,
+            extendedProps: {
+              email: data.email,
+              staffEmail: data.staffEmail, // Add staffEmail to extendedProps
+              notifyTime: data.notifyTime,
+              optInNotifications: data.optInNotifications,
+            },
+          },
+        ]);
         setFormData({
           title: '',
           date: formData.date,
           startTime: '',
           endTime: '',
-          email: userEmail, // Reset to userEmail
+          email: userEmail,
           staffEmail: '', // Reset the staff email
           notifyTime: '1 hour',
           optInNotifications: true,
@@ -174,7 +185,9 @@ export default function StaffCalendar({ user }) {
               <select onChange={(e) => setStudentFilter(e.target.value)} value={studentFilter}>
                 <option value="">All Students</option>
                 {studentEmails.map((email) => (
-                  <option key={email} value={email}>{email}</option>
+                  <option key={email} value={email}>
+                    {email}
+                  </option>
                 ))}
               </select>
             </div>

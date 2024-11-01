@@ -3,6 +3,13 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MyCalendar from './CalendarDays'; // Import your CalendarDays component
 import ProfessorCalendar from './ProfessorCalendar';
+import Messaging from './Messaging';
+import RateTutor from './RateTutor'; // Import your RateTutor component
+import ReportAccount from './ReportAccount';
+import ConfirmPayment from './ConfirmPayment';
+import PayLedger from './PayLedger';
+import ContactProf from './ContactProf'
+
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -51,6 +58,19 @@ function Dashboard() {
         return user && <ProfessorCalendar user={user} />;
       case 'calendar':
         return user && <MyCalendar user={user} />; // Pass the user object to MyCalendar
+      case 'messages':
+        return user && <Messaging user={user} />; //redirect user to Messages
+      case 'rateTutor':
+        return <RateTutor />;
+      case 'confirmPayment':
+        return <ConfirmPayment />;
+      case 'reportAccount':
+        return <ReportAccount />;
+      case 'payLedger':
+        return <PayLedger />;
+      case 'contactProf':
+        return <ContactProf />
+  
       case 'dashboard':
       default:
         return (
@@ -77,6 +97,20 @@ function Dashboard() {
         <button onClick={() => setCurrentPage('calendar')}>Calendar</button>{' '}
         <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>{' '}
         <button onClick={() => navigate('/settings')}>Profile Settings</button>  {/* Profile Settings button */}
+        
+        <button onClick={() => setCurrentPage('messages')}>Messaging</button>{' '}
+        <button onClick={() => setCurrentPage('rateTutor')}>Rate Tutor</button>{' '}
+        <button onClick={() => setCurrentPage('contactProf')}>Contact Professors</button>{' '}
+        {/* Show the Confirm Payment button only if the user is a tutor */}
+        {user.isTutor && (
+          <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>
+        )}
+        {user.isTutor && (
+          <button onClick={() => setCurrentPage('reportAccount')}>Report Account</button>
+        )}
+        {user.isTutor && (
+          <button onClick={() => setCurrentPage('payLedger')}>Pay Ledger</button>
+        )}
         <button onClick={handleSignOut}>Sign Out</button>
         {/* Add other navigation buttons here as needed */}
       </nav>

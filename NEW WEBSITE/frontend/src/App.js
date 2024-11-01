@@ -9,6 +9,9 @@ import ForgotPassword from './components/ForgottenPassword';
 import ConfirmationCode from './components/ConfirmCode';
 import NewPassword from './components/NewPassword';
 import RateTutor from './components/RateTutor';
+import ConfirmPayment from './components/ConfirmPayment';
+import ReportAccount from './components/ReportAccount';
+import PayLedger from './components/PayLedger';
 import ProtectedRoute from './components/Protectedroute';
 import ProfileSettings from './components/ProfileSettings';
 import Messaging from './components/Messaging';
@@ -26,6 +29,9 @@ function App() {
         <Route path="/confirm-code" element={<ConfirmationCode />} />
         <Route path="/new-password" element={<NewPassword />} />
         <Route path="/rate-tutor" element={<RateTutor />} />
+        <Route path="/confirm-payment" element={<ConfirmPayment />} />
+        <Route path="/report-account" element={<ReportAccount />} />
+        <Route path="/pay-ledger" element={<PayLedger />} />
         <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
