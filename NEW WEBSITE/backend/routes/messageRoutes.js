@@ -1,8 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Assuming there's a User model
-const Message = require('../models/Message'); // Assuming you have a Message model
 const router = express.Router();
+const User = require('../models/User');
+const Message = require('../models/Message');
 
 // Middleware to authenticate the user via JWT
 const authenticate = (req, res, next) => {
@@ -19,27 +19,24 @@ const authenticate = (req, res, next) => {
 };
 
 // Route to send a message
-router.post('/send', authenticate, async (req, res) => {
-  const { receiverId, content, isAnnouncement = false } = req.body;
+router.post('/api/messages', async (req, res) => {
+  const { senderEmail, receiverEmail, content } = req.body;
 
   try {
-    const senderId = req.user.userId;
-
-    // Create and save the message
-    const newMessage = new Message({
-      senderId,
-      receiverId,
-      content,
-      isAnnouncement,
-      timestamp: Date.now(),
+    // Create a new message
+    const message = new Message({
+      senderEmail,
+      receiverEmail,
+      content
     });
 
-    await newMessage.save();
+    // Save to MongoDB
+    const savedMessage = await message.save();
 
-    res.status(200).send('Message sent');
+    res.status(201).json(savedMessage);
   } catch (err) {
-    console.error('Send message error:', err);
-    res.status(500).send('Failed to send message');
+    console.error('Error saving message:', err);
+    res.status(500).send('Failed to save message');
   }
 });
 
@@ -98,3 +95,4 @@ router.get('/announcements', authenticate, async (req, res) => {
 });
 
 module.exports = router;
+'

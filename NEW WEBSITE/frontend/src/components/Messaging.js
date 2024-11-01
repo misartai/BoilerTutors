@@ -1,109 +1,135 @@
 import React, { useState, useEffect } from 'react';
 
 export default function Messages({ user }) {
-  //pull components from User class
   const { email: userEmail } = user;
   const [messages, setMessages] = useState([]);
   const [contacts, setContacts] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [selectedContact, setSelectedContact] = useState(null);
+  const [selectedContact, setSelectedContact] = useState('');
+  const [messageContent, setMessageContent] = useState('');
 
-  // Fetch messages when the component mounts or when a contact is selected
   useEffect(() => {
-    if (selectedContact) {
-      fetchMessages(selectedContact);
-    }
-    fetchContacts(); // Fetch contacts list
-  }, [selectedContact]);
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/messages?userEmail=${userEmail}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch messages');
+        }
+        const data = await response.json();
+        setMessages(data);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
 
-  // Fetch messages between the user and a specific contact
-  const fetchMessages = async (contactEmail) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/messages?userEmail=${userEmail}&contactEmail=${contactEmail}`);
-      if (!response.ok) throw new Error('Failed to fetch messages');
-      const data = await response.json();
-      setMessages(data);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
-  };
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/contacts?userEmail=${userEmail}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch contacts');
+        }
+        const data = await response.json();
+        setContacts(data);
+      } catch (error) {
+        console.error('Error fetching contacts:', error);
+      }
+    };
 
-  // Fetch contacts for the user
-  const fetchContacts = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/contacts');
-      if (!response.ok) throw new Error('Failed to fetch contacts');
-      const data = await response.json();
-      setContacts(data);
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-    }
-  };
+    fetchMessages();
+    fetchContacts();
+  }, [userEmail]);
 
-  // Send a new message to the selected contact
-  const sendMessage = async (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    const messageData = {
+    if (!messageContent) {
+      alert('Please enter a message.');
+      return;
+    }
+
+    const newMessage = {
       senderEmail: userEmail,
-      receiverEmail: selectedContact,
-      content: newMessage,
+      recipientEmail: selectedContact,
+      content: messageContent,
     };
 
     try {
       const response = await fetch('http://localhost:5000/api/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messageData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMessage),
       });
-      if (!response.ok) throw new Error('Failed to send message');
-      const data = await response.json();
-      setMessages([...messages, data]);
-      setNewMessage(''); // Clear input after sending
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const savedMessage = await response.json();
+      setMessages([...messages, savedMessage]);
+      setMessageContent('');
     } catch (error) {
       console.error('Error sending message:', error);
       alert('There was an error sending the message. Please try again.');
     }
   };
 
+  const filteredMessages = messages.filter(message => {
+    return selectedContact ? message.recipientEmail === selectedContact || message.senderEmail === selectedContact : true;
+  });
+
   return (
     <div className="messages-container">
-      <div className="contacts-list">
-        <h3>Contacts</h3>
-        <ul>
-          {contacts.map((contact) => (
-            <li
-              key={contact.email}
-              onClick={() => setSelectedContact(contact.email)}
-              className={selectedContact === contact.email ? 'selected' : ''}
-            >
-              {contact.name} ({contact.email})
-            </li>
-          ))}
-        </ul>
-      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+        <div style={{ marginBottom: '10px', width: '100%' }}>
+          <label style={{ marginRight: '5px' }}>Filter by Contact:</label>
+          <select onChange={(e) => setSelectedContact(e.target.value)} value={selectedContact}>
+            <option value="">All Contacts</option>
+            {contacts.map(contact => (
+              <option key={contact.email} value={contact.email}>
+                {contact.name} ({contact.email})
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div className="chat-window">
-        <h3>Chat with {selectedContact}</h3>
-        <div className="messages-list">
-          {messages.map((msg) => (
-            <div key={msg._id} className={`message ${msg.senderEmail === userEmail ? 'sent' : 'received'}`}>
-              <p>{msg.content}</p>
-              <small>{new Date(msg.timestamp).toLocaleString()}</small>
+        <div className="messages-list" style={{ width: '100%', maxHeight: '400px', overflowY: 'scroll' }}>
+          {filteredMessages.map((message, index) => (
+            <div key={index} className="message-item">
+              <strong>{message.senderEmail === userEmail ? 'You' : message.senderEmail}:</strong> {message.content}
             </div>
           ))}
         </div>
 
-        <form onSubmit={sendMessage} className="message-form">
-          <input
-            type="text"
-            placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            required
-          />
-          <button type="submit">Send</button>
-        </form>
+        <div className="message-form" style={{ width: '100%', marginTop: '10px' }}>
+          <form onSubmit={handleSendMessage}>
+            <div>
+              <label>Message:</label>
+              <input
+                type="text"
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label>Recipient:</label>
+              <select
+                value={selectedContact}
+                onChange={(e) => setSelectedContact(e.target.value)}
+                required
+              >
+                <option value="">Select Contact</option>
+                {contacts.map(contact => (
+                  <option key={contact.email} value={contact.email}>
+                    {contact.name} ({contact.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button type="submit">Send Message</button>
+          </form>
+        </div>
       </div>
     </div>
   );
