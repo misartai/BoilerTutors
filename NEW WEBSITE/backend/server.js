@@ -7,7 +7,7 @@ const authRoutes = require('./routes/auth'); // Assuming you have your auth rout
 const User = require('./models/User'); // Import the User model
 const Event = require('./models/Event'); // Import the Event model
 const Message = require('./models/Message'); //Import Message model
-const draftsRouter = require('./routes/drafts');
+const draftsRouter = require('./models/Draft');
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();

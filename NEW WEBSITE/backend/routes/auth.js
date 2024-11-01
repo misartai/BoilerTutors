@@ -25,27 +25,40 @@ router.post('/signup', async (req, res) => {
   const { name, email, password, accountType, isTutor } = req.body;
 
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).send('Email already registered');
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).send('Email already registered');
+      }
+
+      // Generate a confirmation code
+      const confirmationCode = generateCode();
+
+      // Store user temporarily
+      tempUsers[email] = {
+        name,
+        email,
+        password: await bcrypt.hash(password, 10),
+        accountType,
+        isTutor,
+        confirmationCode
+      };
+
+      // Send confirmation email
+      const mailOptions = {
+        from: 'boilertutors420',
+        to: email,
+        subject: 'Email Verification Code',
+        text: `Your confirmation code is: ${confirmationCode}`
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      res.status(200).send('Confirmation email sent');
+    } catch (err) {
+      console.error('Signup error:', err);
+      res.status(500).send('Failed to create user');
     }
-
-    // Generate a confirmation code
-    const confirmationCode = generateCode();
-
-    // Store user temporarily
-    tempUsers[email] = {
-      name,
-      email,
-      password: await bcrypt.hash(password, 10),
-      accountType,
-      isTutor,
-      confirmationCode
-    };
-
-    // Send confirmation email
-
-});
+  });
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -380,7 +393,7 @@ router.get('/announcements', authenticate, async (req, res) => {
 });
 
 // Fetch all announcements
-app.get('/api/announcements', async (req, res) => {
+router.get('/api/announcements', async (req, res) => {
     try {
         const announcements = await Message.find({ isAnnouncement: true });
         res.json(announcements);
