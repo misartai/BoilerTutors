@@ -433,6 +433,7 @@ router.post('/', async (req, res) => {
   });
 
   const savedMessage = await message.save();
+    try {
       res.status(201).json(savedMessage);
     } catch (error) {
       console.error('Error saving message:', error);

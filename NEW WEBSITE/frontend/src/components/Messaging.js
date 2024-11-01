@@ -163,6 +163,22 @@ export default function Messages({ user }) {
     }
   };
 
+  const handleToggleReadStatus = async (messageId, isRead) => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/messages/${messageId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isRead: !isRead }), // Toggle read status
+        });
+
+        if (!response.ok) throw new Error('Failed to update message read status');
+        const updatedMessage = await response.json();
+        setMessages(messages.map(msg => (msg._id === updatedMessage._id ? updatedMessage : msg)));
+      } catch (error) {
+        console.error('Error updating read status:', error);
+      }
+    };
+
  return (
      <div className="main">
        <div className="messages-container" style={{ display: 'flex', height: '100vh' }}>
