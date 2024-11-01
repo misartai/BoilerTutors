@@ -131,4 +131,13 @@
   display: flex;
 }
 
+.event-type.appointment {
+  color: #1e90ff;
+}
+.event-type.pso {
+  color: #ffd700;
+}
+.event-type.office {
+  color: #ff6347;
+}
 

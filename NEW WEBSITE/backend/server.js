@@ -6,7 +6,7 @@ const nodemailer = require('nodemailer');
 const authRoutes = require('./routes/auth'); // Assuming you have your auth routes in a separate file
 const User = require('./models/User'); // Import the User model
 const Event = require('./models/Event'); // Import the Event model
-const Message = require('./models/Message'); //Import Message model
+const Message = require('./models/Message'); // Import Message model
 const draftsRouter = require('./models/Draft');
 require('dotenv').config(); // Load environment variables from .env file
 
@@ -19,20 +19,20 @@ mongoose.connect('mongodb+srv://aryanshahu13:VyQrFxeiIhkLIWFI@boilertutors.jk0hb
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
-// Nodemailer transporter setup
+// Setup Nodemailer transporter (adjust with your email provider settings)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: 'gmail', // You can use other services (e.g., Outlook, Yahoo)
   auth: {
-    user: process.env.EMAIL, // Use environment variable for email
-    pass: process.env.EMAIL_PASSWORD, // Use environment variable for App Password
-  },
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD // Use environment variables for sensitive data
+  }
 });
 
 // Use authentication routes
 app.use('/api/auth', authRoutes);  // Ensure your auth routes are set up
 
 const path = require('path');
-app.use(express.static(path.join(__dirname, '../frontend/public'))); //get index page
+app.use(express.static(path.join(__dirname, '../frontend/public'))); // get index page
 
 // ----- Tutor & Review Functionality -----
 
@@ -79,7 +79,7 @@ app.get('/api/tutors', async (req, res) => {
 });
 
 // Fetch reviews for a specific tutor
-app.get('/tutors/:tutorId/reviews', async (req, res) => {
+app.get('/api/tutors/:tutorId/reviews', async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.tutorId);
     res.json(tutor.reviews);
@@ -104,170 +104,15 @@ app.post('/api/tutors/:tutorId/reviews', async (req, res) => {
     const tutor = await Tutor.findById(req.params.tutorId);
     const newReview = {
       rating: req.body.rating,
-      content: req.body.content,
+      content: req.body.content
     };
     tutor.reviews.push(newReview);
-    
-    // Update the average rating before saving
-    tutor.averageRating = tutor.calculateAverageRating();
     await tutor.save();
-    
     res.json(newReview);
   } catch (error) {
     res.status(500).json({ error: 'Error adding review' });
   }
 });
-
-// ----- Payment Functionality -----
-
-// Schema for payments
-const paymentSchema = new mongoose.Schema({
-  studentName: { type: String, required: true },
-  payments: [
-    {
-      status: { type: String, required: true },
-      timestamp: { type: String, required: true },
-      reason: { type: String, default: '' }, // Reason for denial if applicable
-    },
-  ],
-});
-
-const Payment = mongoose.model('Payment', paymentSchema);
-
-// Route to fetch all students (if not already created)
-app.get('/students', async (req, res) => {
-  // Replace with actual student fetching logic
-  const students = await User.find({ accountType: 'student' });
-  res.json(students);
-});
-
-app.post('/send-email', async (req, res) => {
-  const { subject, message, studentName } = req.body;
-
-  const mailOptions = {
-      from: process.env.EMAIL,
-      to: studentName, // Assuming you have the student's email in the database
-      subject: subject,
-      text: message,
-  };
-
-  try {
-      await transporter.sendMail(mailOptions);
-      res.json({ message: 'Email sent successfully' });
-  } catch (error) {
-      console.error('Error sending email:', error);
-      res.status(500).json({ error: 'Error sending email' });
-  }
-});
-
-
-app.post('/students/:studentName/payments', async (req, res) => {
-  try {
-      const { status, timestamp, reason } = req.body;
-      const studentName = req.params.studentName;
-
-      let paymentRecord = await Payment.findOne({ studentName });
-
-      if (!paymentRecord) {
-          paymentRecord = new Payment({ studentName, payments: [] });
-      }
-
-      // Prepare new payment entry
-      const newEntry = { status, timestamp, reason };
-      paymentRecord.payments.push(newEntry);
-      await paymentRecord.save();
-
-      // Send email notification if payment status is updated
-      const subject = `Payment Status Updated: ${status}`;
-      const message = `The payment status for ${studentName} has been updated to ${status} on ${timestamp}. Reason: ${reason || 'N/A'}.`;
-      await sendEmail(subject, message); // Assuming sendEmail function is defined above
-
-      res.json({ message: 'Payment status updated', paymentRecord });
-  } catch (error) {
-      console.error('Error updating payment status:', error);
-      res.status(500).send('Error updating payment status');
-  }
-});
-
-
-const reportSchema = new mongoose.Schema({
-  studentId: { type: String, required: true },
-  reports: [
-    {
-      trackingId: { type: String, required: true },
-      details: { type: String, required: true },
-      date: { type: Date, default: Date.now }
-    }
-  ]
-});
-
-const Report = mongoose.model('Report', reportSchema);
-app.post('/api/reports', async (req, res) => {
-  const { studentId, details } = req.body;
-  const trackingId = uuidv4();
-
-  try {
-    // Find or create a report entry for the student
-    let reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      reportEntry = new Report({ studentId, reports: [] });
-    }
-
-    // Add the new report to the reports array
-    reportEntry.reports.push({ trackingId, details });
-
-    // Save the updated report entry
-    await reportEntry.save();
-
-    res.status(201).json({ trackingId, details });
-  } catch (error) {
-    console.error('Error submitting report:', error);
-    res.status(500).json({ error: 'Failed to submit report' });
-  }
-});
-app.get('/api/reports/:studentId', async (req, res) => {
-  const { studentId } = req.params;
-
-  try {
-    const reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'No reports found for this student' });
-    }
-
-    res.json(reportEntry.reports); // Return the reports array for the student
-  } catch (error) {
-    console.error('Error fetching reports:', error);
-    res.status(500).json({ error: 'Error fetching reports' });
-  }
-});
-app.get('/api/reports/details/:trackingId', async (req, res) => {
-  const { trackingId } = req.params;
-
-  try {
-    const reportEntry = await Report.findOne({ 'reports.trackingId': trackingId });
-
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'Report not found' });
-    }
-
-    const report = reportEntry.reports.find(report => report.trackingId === trackingId);
-    res.json(report);
-  } catch (error) {
-    console.error('Error fetching report details:', error);
-    res.status(500).json({ error: 'Error fetching report details' });
-  }
-});
-
-
-
-
-
-
-
-
-
-
-
 
 // ----- Event Functionality -----
 
@@ -284,11 +129,20 @@ function calculateReminderTime(appointmentTime, notifyTime) {
   }
 }
 
-// Route to get all events from the database
+// Route to get all events from the database, with optional filtering by eventType
 app.get('/api/events', async (req, res) => {
+  const { eventType, tutorEmail, studentEmail, eventName } = req.query;
+
+  // Build filter object based on provided query parameters
+  const filter = {};
+  if (eventType) filter.eventType = eventType;
+  if (tutorEmail) filter.tutorName = tutorEmail;
+  if (studentEmail) filter.email = studentEmail;
+  if (eventName) filter.title = eventName;
+
   try {
-    const events = await Event.find(); // Fetch all events from MongoDB
-    res.json(events); // Send the events as a response
+    const events = await Event.find(filter);
+    res.json(events);
   } catch (err) {
     console.error('Error retrieving events:', err);
     res.status(500).send('Error retrieving events');
@@ -297,30 +151,38 @@ app.get('/api/events', async (req, res) => {
 
 // Route to add a new event
 app.post('/api/events', async (req, res) => {
-  const { title, start, end, email, tutorName, notifyTime, optInNotifications } = req.body;
+  const { title, start, end, email, staffEmail, notifyTime, optInNotifications, eventType } = req.body;
 
-  // Log the incoming request data for debugging
   console.log('Incoming event data:', req.body);
 
   // Perform simple validation on incoming data
-  if (!title || !start || !end || !email || !tutorName) {
+  if (!title || !start || !end || !email || !staffEmail || !eventType) {
     return res.status(400).send('All fields are required.');
   }
 
-  const newEvent = new Event({ title, start, end, email, tutorName, notifyTime, optInNotifications });
+  const newEvent = new Event({
+    title,
+    start,
+    end,
+    email,
+    staffEmail, // Change from tutorName to staffEmail
+    notifyTime,
+    optInNotifications,
+    eventType, // Ensure eventType is included when creating the new Event
+  });
 
   try {
-    const savedEvent = await newEvent.save(); // Save the event to the database
+    const savedEvent = await newEvent.save();
     console.log('New event saved:', savedEvent);
 
     // Only send emails if the user opted into notifications
     if (optInNotifications) {
-      // Send confirmation email with tutor's name
+      // Send confirmation email to the student
       const confirmationMailOptions = {
         from: process.env.EMAIL,
         to: email,
         subject: 'Appointment Confirmation',
-        text: `Dear student,\n\nYour appointment with ${tutorName} is confirmed.\n\nDetails:\n- Date: ${start}\n- Tutor: ${tutorName}\n- Duration: ${start} to ${end}\n\nThank you!`
+        text: `Dear student,\n\nYour appointment with ${staffEmail} is confirmed.\n\nDetails:\n- Date: ${start}\n- Staff: ${staffEmail}\n- Duration: ${start} to ${end}\n\nThank you!`
       };
 
       transporter.sendMail(confirmationMailOptions, (err, info) => {
@@ -331,36 +193,50 @@ app.post('/api/events', async (req, res) => {
         }
       });
 
-      // Schedule a reminder email
-      const reminderTime = calculateReminderTime(start, notifyTime);
-      const currentTime = new Date();
+      // Send email to the staff member
+      const appointmentLink = `http://localhost:3000/accept-appointment/${savedEvent._id}`; // Link to accept appointment
+      const appointmentEmailOptions = {
+        from: process.env.EMAIL,
+        to: staffEmail,
+        subject: 'New Appointment Scheduled',
+        text: `Dear Staff,\n\nYou have a new appointment scheduled.\n\nDetails:\n- Title: ${title}\n- Date: ${start}\n- Duration: ${start} to ${end}\n\nPlease click the link to accept the appointment:\n${appointmentLink}\n\nThank you!`
+      };
 
-      if (reminderTime > currentTime) {
-        const delay = reminderTime - currentTime;
-
-        setTimeout(() => {
-          const reminderMailOptions = {
-            from: process.env.EMAIL,
-            to: email,
-            subject: 'Appointment Reminder',
-            text: `Dear student,\n\nThis is a reminder for your upcoming appointment with ${tutorName}.\n\nDetails:\n- Date: ${start}\n- Tutor: ${tutorName}\n- Duration: ${start} to ${end}\n\nPlease make sure to be available on time!`
-          };
-
-          transporter.sendMail(reminderMailOptions, (err, info) => {
-            if (err) {
-              console.error('Error sending reminder email:', err);
-            } else {
-              console.log('Reminder email sent:', info.response);
-            }
-          });
-        }, delay);
-      }
+      transporter.sendMail(appointmentEmailOptions, (err, info) => {
+        if (err) {
+          console.error('Error sending appointment email:', err);
+        } else {
+          console.log('Appointment email sent:', info.response);
+        }
+      });
     }
 
     res.status(201).json(savedEvent); // Send back the saved event
   } catch (err) {
     console.error('Failed to create event:', err); // Log error details
     res.status(500).send('Failed to create event');
+  }
+});
+
+// Route to accept the appointment
+app.get('/api/accept-appointment/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).send('Event not found');
+    }
+
+    // Logic to mark the event as accepted (you could add a field for this in the schema)
+    // For example, you might add a field called "accepted" to the event and update it here
+    event.accepted = true; // Example field to indicate acceptance
+    await event.save();
+
+    res.send('Appointment accepted successfully.');
+  } catch (error) {
+    console.error('Error accepting appointment:', error);
+    res.status(500).send('Error accepting appointment');
   }
 });
 
