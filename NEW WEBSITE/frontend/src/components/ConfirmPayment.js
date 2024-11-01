@@ -12,42 +12,59 @@ const ConfirmPayment = () => {
     const [deniedOnce, setDeniedOnce] = useState(false);
     const [students, setStudents] = useState([]);
 
+    const MESSAGES = {
+        CONFIRM_PAYMENT_AGAIN: 'You cannot confirm the payment again.',
+        DENY_PAYMENT_AGAIN: 'You cannot deny the payment again.',
+        PAYMENT_CONFIRMED: 'Payment confirmed by tutor.',
+        PAYMENT_DENIED: 'Payment denied by tutor.',
+        PAYMENT_DENIED_REASON: 'Payment denied with reason provided.',
+        FETCH_ERROR: 'Error fetching students:',
+        EMAIL_SUBJECT_CONFIRMED: 'Payment Confirmed',
+        EMAIL_SUBJECT_DENIED: 'Payment Denied',
+    };
+
     useEffect(() => {
         const fetchStudents = async () => {
             try {
                 const response = await fetch('http://localhost:5000/students');
+                if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
                 setStudents(data);
             } catch (error) {
-                console.error('Error fetching students:', error);
+                console.error(MESSAGES.FETCH_ERROR, error);
             }
         };
         fetchStudents();
     }, []);
 
     const sendEmail = async (subject, message) => {
-        await fetch('http://localhost:5000/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subject, message, studentName }),
-        });
+        try {
+            await fetch('http://localhost:5000/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subject, message, studentName }),
+            });
+        } catch (error) {
+            console.error('Error sending email:', error);
+        }
     };
 
     const confirmPayment = async () => {
         if (!studentName) return;
+
         if (confirmedOnce) {
-            setNotification('You cannot confirm the payment again.');
+            setNotification(MESSAGES.CONFIRM_PAYMENT_AGAIN);
             return;
         }
 
         const timestamp = new Date().toLocaleString();
         const newEntry = {
             status: 'Paid',
-            timestamp: timestamp,
+            timestamp,
             reason: '', // No reason needed for confirmation
         };
 
-        setPaymentHistory(prev => ({
+        setPaymentHistory((prev) => ({
             ...prev,
             [studentName]: [...(prev[studentName] || []), newEntry],
         }));
@@ -59,25 +76,26 @@ const ConfirmPayment = () => {
         });
 
         setCurrentStatus('Paid');
-        setNotification('Payment confirmed by tutor.');
+        setNotification(MESSAGES.PAYMENT_CONFIRMED);
         setShowDetails(false);
         setReason('');
         setConfirmedOnce(true);
         setDeniedOnce(false);
 
         // Send email notification for payment confirmation
-        await sendEmail('Payment Confirmed', `Payment for ${studentName} has been confirmed on ${timestamp}.`);
+        await sendEmail(MESSAGES.EMAIL_SUBJECT_CONFIRMED, `Payment for ${studentName} has been confirmed on ${timestamp}.`);
     };
 
     const denyPayment = () => {
         if (!studentName) return;
+
         if (deniedOnce) {
-            setNotification('You cannot deny the payment again.');
+            setNotification(MESSAGES.DENY_PAYMENT_AGAIN);
             return;
         }
 
         setCurrentStatus('Denied');
-        setNotification('Payment denied by tutor.');
+        setNotification(MESSAGES.PAYMENT_DENIED);
         setShowDetails(true);
         setDeniedOnce(true);
         setConfirmedOnce(false);
@@ -88,11 +106,11 @@ const ConfirmPayment = () => {
         const timestamp = new Date().toLocaleString();
         const newEntry = {
             status: 'Denied',
-            timestamp: timestamp,
-            reason: reason,
+            timestamp,
+            reason,
         };
 
-        setPaymentHistory(prev => ({
+        setPaymentHistory((prev) => ({
             ...prev,
             [studentName]: [...(prev[studentName] || []), newEntry],
         }));
@@ -103,12 +121,12 @@ const ConfirmPayment = () => {
             body: JSON.stringify(newEntry),
         });
 
-        setNotification('Payment denied with reason provided.');
+        setNotification(MESSAGES.PAYMENT_DENIED_REASON);
         setShowDetails(false);
         setReason('');
 
         // Send email notification for payment denial
-        await sendEmail('Payment Denied', `Payment for ${studentName} has been denied for the following reason: ${reason}. Denied on ${timestamp}.`);
+        await sendEmail(MESSAGES.EMAIL_SUBJECT_DENIED, `Payment for ${studentName} has been denied for the following reason: ${reason}. Denied on ${timestamp}.`);
     };
 
     return (

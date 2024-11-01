@@ -1,64 +1,126 @@
-.report-account-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    background-color: #f9f9f9;
-  }
-  
-  h1 {
-    text-align: center;
-    color: #333;
-  }
-  
-  form {
-    margin-top: 20px;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: bold;
-    color: #555;
-  }
-  
-  .student-select {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
-  
-  .report-textarea {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    resize: vertical;
-  }
-  
-  .submit-button {
-    width: 100%;
-    padding: 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .submit-button:hover {
-    background-color: #45a049;
-  }
-  
-  .submitted-report {
-    margin-top: 20px;
-    padding: 10px;
-    border: 1px solid green;
-    border-radius: 5px;
-    background-color: #e8f5e9;
-  }
+/* General layout styling */
+.report-account {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+  font-family: Arial, sans-serif;
+  background-color: #f1f1f1;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.report-account__header {
+  text-align: center;
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+/* Form styling */
+.report-account__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.report-account__form label {
+  font-weight: bold;
+  color: #666;
+}
+
+.report-account__form select,
+.report-account__form textarea,
+.report-account__form button[type="submit"] {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.report-account__form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.report-account__submit-btn {
+  background-color: #4CAF50;
+  color: #fff;
+  border: none;
+  font-size: 1rem;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.report-account__submit-btn:hover {
+  background-color: #45a049;
+}
+
+/* Button to view all reports */
+.report-account__view-all-btn {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 16px;
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.report-account__view-all-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Report list and card styling */
+.report-account__report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.report-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.report-card:hover {
+  transform: scale(1.02);
+}
+
+.report-card__title {
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.report-card__details {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.report-card__tracking-id {
+  font-weight: bold;
+  color: #555;
+  background-color: #f0f0f0;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.report-card__tracking-id:hover {
+  background-color: #e0e0e0;
+}

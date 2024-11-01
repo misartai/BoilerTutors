@@ -204,73 +204,89 @@ app.post('/students/:studentId/payments', async (req, res) => {
 });
 
 
+// report
 const reportSchema = new mongoose.Schema({
-  studentId: { type: String, required: true },
+  studentName: { type: String, required: true },
   reports: [
     {
-      trackingId: { type: String, required: true },
-      details: { type: String, required: true },
-      date: { type: Date, default: Date.now }
+      trackingId: { type: String, required: true, unique: true },
+      timestamp: { type: String, required: true },
+      reason: { type: String, default: '' },
     }
   ]
 });
 
 const Report = mongoose.model('Report', reportSchema);
-app.post('/api/reports', async (req, res) => {
-  const { studentId, details } = req.body;
-  const trackingId = uuidv4();
+module.exports = Report;
 
+app.get('/reports', async (req, res) => {
   try {
-    // Find or create a report entry for the student
-    let reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      reportEntry = new Report({ studentId, reports: [] });
-    }
-
-    // Add the new report to the reports array
-    reportEntry.reports.push({ trackingId, details });
-
-    // Save the updated report entry
-    await reportEntry.save();
-
-    res.status(201).json({ trackingId, details });
-  } catch (error) {
-    console.error('Error submitting report:', error);
-    res.status(500).json({ error: 'Failed to submit report' });
-  }
-});
-app.get('/api/reports/:studentId', async (req, res) => {
-  const { studentId } = req.params;
-
-  try {
-    const reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'No reports found for this student' });
-    }
-
-    res.json(reportEntry.reports); // Return the reports array for the student
+    const reports = await Report.find({});
+    res.status(200).json(reports);
   } catch (error) {
     console.error('Error fetching reports:', error);
-    res.status(500).json({ error: 'Error fetching reports' });
+    res.status(500).json({ message: 'Error fetching reports', error });
   }
 });
-app.get('/api/reports/details/:trackingId', async (req, res) => {
-  const { trackingId } = req.params;
 
+
+
+app.post('/reports', async (req, res) => {
   try {
-    const reportEntry = await Report.findOne({ 'reports.trackingId': trackingId });
+      const { studentName, reason } = req.body;
+      const trackingId = Math.floor(10000 + Math.random() * 90000).toString(); // Inline generation
+      const timestamp = new Date().toISOString();
 
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'Report not found' });
+      // Check if a report already exists for this student
+      let report = await Report.findOne({ studentName });
+
+      if (report) {
+          // If the report exists, push the new report entry into the reports array
+          report.reports.push({
+              trackingId,
+              timestamp,
+              reason
+          });
+          await report.save();
+      } else {
+          // If no report exists, create a new report entry
+          report = new Report({
+              studentName,
+              reports: [{
+                  trackingId,
+                  timestamp,
+                  reason
+              }]
+          });
+          await report.save();
+      }
+
+      res.status(201).json({ message: 'Report saved successfully!', trackingId });
+  } catch (error) {
+      console.error('Error saving report:', error);
+      res.status(400).json({ message: 'Error saving report', error });
+  }
+});
+
+
+
+
+app.get('/reports/:studentName', async (req, res) => {
+  try {
+    const { studentName } = req.params;
+    const reports = await Report.findOne({ studentName });
+
+    if (!reports) {
+      return res.status(404).json({ message: 'No reports found for this student.' });
     }
 
-    const report = reportEntry.reports.find(report => report.trackingId === trackingId);
-    res.json(report);
+    res.status(200).json(reports);
   } catch (error) {
-    console.error('Error fetching report details:', error);
-    res.status(500).json({ error: 'Error fetching report details' });
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ message: 'Error fetching reports', error });
   }
 });
+
 
 //const Payment = require('./models/Payment'); // Adjust the model path accordingly
 
@@ -432,6 +448,20 @@ app.get('/api/accept-appointment/:eventId', async (req, res) => {
     console.error('Error accepting appointment:', error);
     res.status(500).send('Error accepting appointment');
   }
+});
+app.post('/refresh-token', (req, res) => {
+  const { token } = req.body;
+
+  // Verify the token and get the payload
+  jwt.verify(token, secretKey, (err, decoded) => {
+    if (err) {
+      return res.status(401).send('Token is invalid or expired');
+    }
+
+    // Create a new token
+    const newToken = jwt.sign({ userId: decoded.userId }, secretKey, { expiresIn: '1h' });
+    res.json({ token: newToken });
+  });
 });
 
 // Start the server
