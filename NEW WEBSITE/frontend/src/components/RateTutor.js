@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaStar } from 'react-icons/fa'; 
+import { FaStar } from 'react-icons/fa';
 import axios from 'axios';
 import './rateTutor.css';
 
