@@ -44,7 +44,7 @@ const ConfirmPayment = () => {
         const newEntry = {
             status: 'Paid',
             timestamp: timestamp,
-            reason: '',
+            reason: '', // No reason needed for confirmation
         };
 
         setPaymentHistory(prev => ({

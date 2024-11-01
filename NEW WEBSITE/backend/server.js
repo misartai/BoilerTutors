@@ -128,6 +128,7 @@ const paymentSchema = new mongoose.Schema({
       status: { type: String, required: true },
       timestamp: { type: String, required: true },
       reason: { type: String, default: '' }, // Reason for denial if applicable
+      amount: {type: String, default: '10'},
     },
   ],
 });
@@ -163,7 +164,7 @@ app.post('/send-email', async (req, res) => {
 
 app.post('/students/:studentName/payments', async (req, res) => {
   try {
-      const { status, timestamp, reason } = req.body;
+      const { status, reason } = req.body;
       const studentName = req.params.studentName;
 
       let paymentRecord = await Payment.findOne({ studentName });
@@ -173,19 +174,36 @@ app.post('/students/:studentName/payments', async (req, res) => {
       }
 
       // Prepare new payment entry
+      const timestamp = new Date().toISOString(); // Make sure the timestamp is in ISO format
+      console.log('Saving payment with timestamp:', timestamp); // Log the timestamp
       const newEntry = { status, timestamp, reason };
       paymentRecord.payments.push(newEntry);
       await paymentRecord.save();
-
-      // Send email notification if payment status is updated
-      const subject = `Payment Status Updated: ${status}`;
-      const message = `The payment status for ${studentName} has been updated to ${status} on ${timestamp}. Reason: ${reason || 'N/A'}.`;
-      await sendEmail(subject, message); // Assuming sendEmail function is defined above
 
       res.json({ message: 'Payment status updated', paymentRecord });
   } catch (error) {
       console.error('Error updating payment status:', error);
       res.status(500).send('Error updating payment status');
+  }
+});
+
+
+// Confirm payment route
+app.post('/students/:studentId/payments', async (req, res) => {
+  const { studentId } = req.params;
+  const { status, timestamp, reason } = req.body;
+
+  try {
+    const paymentEntry = await Payment.findOneAndUpdate(
+      { studentId },
+      { $push: { payments: { status, timestamp, reason } } },
+      { new: true, upsert: true } // Create a new document if it doesn't exist
+    );
+
+    res.status(200).json(paymentEntry);
+  } catch (error) {
+    console.error('Error updating payment entry:', error);
+    res.status(500).json({ error: 'Error updating payment entry' });
   }
 });
 
@@ -257,6 +275,31 @@ app.get('/api/reports/details/:trackingId', async (req, res) => {
     res.status(500).json({ error: 'Error fetching report details' });
   }
 });
+
+//const Payment = require('./models/Payment'); // Adjust the model path accordingly
+
+app.get('/api/payments', async (req, res) => {
+  try {
+      const payments = await Payment.find({});
+      const formattedPayments = payments.map(payment => ({
+          ...payment._doc,
+          payments: payment.payments.map(p => ({
+              amount: p.amount,
+              status: p.status,
+              timestamp: p.timestamp, // Ensure this field is included
+              reason: p.reason // Ensure this field is included
+          }))
+      }));
+      console.log("Fetched Payments:", JSON.stringify(formattedPayments, null, 2));
+      res.json(formattedPayments);
+  } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
 
 
 
