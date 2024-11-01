@@ -35,7 +35,8 @@ const postSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now }
     }
   ],
-  isFavourite: { type: Boolean, default: false } // Added field for favourite status
+  isFavourite: { type: Boolean, default: false },
+  isBookmarked: { type: Boolean, default: false } // New field for bookmarks
 });
 
 const Post = mongoose.model('Post', postSchema);
@@ -200,11 +201,39 @@ app.put('/posts/:id/favourite', async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
-    post.isFavourite = !post.isFavourite;
+    post.isFavourite = !post.isFavourite; // Toggle the status
     const updatedPost = await post.save();
+    console.log("Updated favourite status:", updatedPost.isFavourite); // Debugging line
     res.json(updatedPost);
   } catch (error) {
     res.status(500).json({ error: 'Error updating favourite status' });
+  }
+});
+
+// Toggle bookmark status of a post
+app.put('/posts/:id/bookmark', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    post.isBookmarked = !post.isBookmarked; // Toggle the status
+    const updatedPost = await post.save();
+    res.json(updatedPost);
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating bookmark status' });
+  }
+});
+
+
+
+app.get('/posts/favourites', async (req, res) => {
+  try {
+    const favouritePosts = await Post.find({ isFavourite: true });
+    res.json(favouritePosts);
+  } catch (error) {
+    console.error('Error fetching favourite posts:', error);
+    res.status(500).json({ error: 'Error fetching favourite posts' });
   }
 });
 

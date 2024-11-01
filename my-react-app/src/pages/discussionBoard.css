@@ -94,6 +94,19 @@ form textarea {
 }
 
 .favourite.active {
-  color: red;
+  color: red; /* Active favourites will be marked in red */
 }
+
+.bookmark {
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: grey;
+}
+
+.bookmark.active {
+  color: blue; /* Active bookmarks will be marked in blue */
+}
+
 

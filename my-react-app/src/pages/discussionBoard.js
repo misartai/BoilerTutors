@@ -1,4 +1,3 @@
-// src/pages/discussionBoard.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './discussionBoard.css';
@@ -10,8 +9,8 @@ const DiscussionBoard = () => {
   const [newPostContent, setNewPostContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showFavourites, setShowFavourites] = useState(false);
 
-  // Fetch all posts once on component mount
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -25,7 +24,6 @@ const DiscussionBoard = () => {
     fetchPosts();
   }, []);
 
-  // Handler for creating a new post
   const handleCreatePost = async (e) => {
     e.preventDefault();
     try {
@@ -43,7 +41,6 @@ const DiscussionBoard = () => {
     }
   };
 
-  // Handler for deleting a post
   const handleDeletePost = async (postId) => {
     try {
       await axios.delete(`http://localhost:3000/posts/${postId}`);
@@ -53,7 +50,6 @@ const DiscussionBoard = () => {
     }
   };
 
-  // Handler for editing a post
   const handleEditPost = async (postId, updatedTitle, updatedContent) => {
     try {
       const response = await axios.put(`http://localhost:3000/posts/${postId}`, {
@@ -66,7 +62,6 @@ const DiscussionBoard = () => {
     }
   };
 
-  // Handler for adding a reply to a post
   const handleAddReply = async (postId, replyContent) => {
     try {
       const response = await axios.post(`http://localhost:3000/posts/${postId}/replies`, {
@@ -79,22 +74,48 @@ const DiscussionBoard = () => {
     }
   };
 
-  // Handler for toggling favourite status of a post
   const toggleFavourite = async (postId) => {
+    console.log("Favourite button clicked for post:", postId); // Debugging line
     try {
       const response = await axios.put(`http://localhost:3000/posts/${postId}/favourite`);
-      setPosts(posts.map((post) => (post._id === postId ? response.data : post)));
+      console.log("Updated post from server:", response.data); // Debugging line
+      const updatedPosts = posts.map((post) =>
+        post._id === postId ? response.data : post
+      );
+      console.log("Updated posts:", updatedPosts); // Debugging line
+      setPosts(updatedPosts);
     } catch (error) {
       console.error('Error toggling favourite status:', error);
     }
   };
+  
+  const toggleBookmark = async (postId) => {
+    console.log("Bookmark button clicked for post:", postId); // Debugging line
+    try {
+      const response = await axios.put(`http://localhost:3000/posts/${postId}/bookmark`);
+      setPosts(posts.map((post) => (post._id === postId ? response.data : post)));
+    } catch (error) {
+      console.error('Error toggling bookmark status:', error);
+    }
+  };
+  
+  
 
-  // Filter posts based on search query
-  const filteredPosts = posts.filter(
+  const sortedPosts = [...posts].sort((a, b) => {
+  if (a.isBookmarked === b.isBookmarked) {
+    return 0;
+  }
+  return a.isBookmarked ? -1 : 1;
+});
+
+const filteredPosts = sortedPosts
+  .filter(
     (post) =>
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  )
+  .filter((post) => (showFavourites ? post.isFavourite : true));
+
 
   return (
     <div>
@@ -104,6 +125,9 @@ const DiscussionBoard = () => {
       <div className="options">
         <button onClick={() => setShowCreatePost(!showCreatePost)}>
           {showCreatePost ? 'Cancel' : 'Create Post'}
+        </button>
+        <button onClick={() => setShowFavourites(!showFavourites)}>
+          {showFavourites ? 'Show All Posts' : 'Show Favourites'}
         </button>
         <input
           type="text"
@@ -150,20 +174,22 @@ const DiscussionBoard = () => {
 
       <h2>Posts</h2>
       {filteredPosts.length === 0 ? (
-        <p>No posts found.</p>
-      ) : (
-        filteredPosts.map((post) => (
-          <Post
-            key={post._id}
-            post={post}
-            currentUserId={'currentUserId'}
-            handleDeletePost={handleDeletePost}
-            handleEditPost={handleEditPost}
-            handleAddReply={handleAddReply}
-            toggleFavourite={toggleFavourite}
-          />
-        ))
-      )}
+  <p>No posts found.</p>
+) : (
+  filteredPosts.map((post) => (
+    <Post
+      key={post._id} // The unique key added to ensure React properly re-renders the specific post
+      post={post}
+      currentUserId={'currentUserId'}
+      handleDeletePost={handleDeletePost}
+      handleEditPost={handleEditPost}
+      handleAddReply={handleAddReply}
+      toggleFavourite={toggleFavourite}
+      toggleBookmark={toggleBookmark} // New prop for bookmarking
+    />
+  ))
+)}
+
     </div>
   );
 };

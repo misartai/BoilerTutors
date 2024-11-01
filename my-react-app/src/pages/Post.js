@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import './discussionBoard.css';
 
-const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAddReply, toggleFavourite }) => {
+const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAddReply, toggleFavourite, toggleBookmark, }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [updatedTitle, setUpdatedTitle] = useState(post.title);
   const [updatedContent, setUpdatedContent] = useState(post.content);
@@ -61,11 +61,24 @@ const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAdd
               </>
             )}
             <button
-              className={post.favourite ? 'favourite active' : 'favourite'}
-              onClick={() => toggleFavourite(post._id)}
-            >
-              ❤
-            </button>
+  className={post.isFavourite ? 'favourite active' : 'favourite'}
+  onClick={() => {
+    toggleFavourite(post._id);
+    console.log("Post favourite status:", post.isFavourite); // Debugging line
+  }}
+>
+  ❤
+</button>
+
+<button
+  className={post.isBookmarked ? 'bookmark active' : 'bookmark'}
+  onClick={() => toggleBookmark(post._id)}
+>
+  📌
+</button>
+
+
+
           </div>
           {/* Reply Form */}
           {showReplyForm && (
@@ -95,5 +108,7 @@ const Post = ({ post, currentUserId, handleDeletePost, handleEditPost, handleAdd
     </div>
   );
 };
+
+
 
 export default Post;
