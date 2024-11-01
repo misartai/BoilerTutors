@@ -23,6 +23,7 @@ export default function MyCalendar({ user }) {
   const [viewMode, setViewMode] = useState('student');
   const [studentFilter, setStudentFilter] = useState('');
   const [eventNameFilter, setEventNameFilter] = useState('');
+  const [eventTypeFilter, setEventTypeFilter] = useState('');
   const [studentEmails, setStudentEmails] = useState([]);
   const [psoEventNames, setPsoEventNames] = useState([]);
 
@@ -45,15 +46,12 @@ export default function MyCalendar({ user }) {
         const response = await fetch(`http://localhost:5000/api/events`);
         if (!response.ok) throw new Error('Failed to fetch events');
         const data = await response.json();
-
         setEvents(data);
-        setStudentEmails([...new Set(data.map(event => event.email))]);
+        const emails = Array.from(new Set(data.map(event => event.email)));
+        setStudentEmails(emails);
 
-        // Extract unique event names for the PSO filter
-        const uniquePsoEvents = data
-          .filter(event => event.extendedProps?.eventType !== 'appointment') // Exclude appointments for PSO
-          .map(event => event.title);
-        setPsoEventNames([...new Set(uniquePsoEvents)]);
+        const uniqueEventNames = [...new Set(data.map(event => event.title))];
+        setPsoEventNames(uniqueEventNames);
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -76,7 +74,10 @@ export default function MyCalendar({ user }) {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value,
+    });
   };
 
   const handleSubmit = (e) => {
@@ -85,6 +86,8 @@ export default function MyCalendar({ user }) {
       alert('Please select an end time.');
       return;
     }
+
+    // Create new event object
     const newEvent = {
       title: formData.title,
       start: `${formData.date}T${formData.startTime}`,
@@ -95,6 +98,7 @@ export default function MyCalendar({ user }) {
       notifyTime: formData.notifyTime,
       optInNotifications: formData.optInNotifications,
     };
+
     fetch('http://localhost:5000/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -105,18 +109,22 @@ export default function MyCalendar({ user }) {
         return response.json();
       })
       .then((data) => {
-        setEvents([...events, {
-          title: data.title,
-          start: data.start,
-          end: data.end,
-          extendedProps: {
-            email: data.email,
-            tutorName: data.tutorName,
-            notifyTime: data.notifyTime,
-            optInNotifications: data.optInNotifications,
-            eventType: data.eventType,
+        // Update events state correctly
+        setEvents(prevEvents => [
+          ...prevEvents,
+          {
+            title: data.title,
+            start: data.start,
+            end: data.end,
+            extendedProps: {
+              email: data.email,
+              tutorName: data.tutorName,
+              notifyTime: data.notifyTime,
+              optInNotifications: data.optInNotifications,
+              eventType: data.eventType, // Ensure eventType is present
+            },
           },
-        }]);
+        ]);
         setFormData({
           title: '',
           date: formData.date,
@@ -135,16 +143,10 @@ export default function MyCalendar({ user }) {
   };
 
   const filteredEvents = events.filter(event => {
-    const tutorEmailInEvent = event.extendedProps?.tutorName;
-    const matchesTutor = selectedTutor ? tutorEmailInEvent === selectedTutor : true;
+    const matchesTutor = selectedTutor ? event.extendedProps.tutorName === selectedTutor : true;
     const matchesStudent = studentFilter ? event.email === studentFilter : true;
     const matchesEventName = eventNameFilter ? event.title === eventNameFilter : true;
-
-    // Automatically filter for PSO view
-    const matchesEventType =
-      viewMode === 'pso'
-        ? event.extendedProps?.eventType === 'pso' || event.extendedProps?.eventType === 'office' // Show only PSO and Office events in PSO view
-        : true; // Show all events in student view
+    const matchesEventType = eventTypeFilter ? event.extendedProps.eventType === eventTypeFilter : true;
 
     return matchesTutor && matchesStudent && matchesEventName && matchesEventType;
   });
@@ -171,11 +173,28 @@ export default function MyCalendar({ user }) {
           <select onChange={(e) => setViewMode(e.target.value)} value={viewMode}>
             <option value="student">Student View</option>
             {isTutor && <option value="tutor">Tutor View</option>}
-            <option value="pso">PSO/Office Hours View</option>
           </select>
 
-          {viewMode === 'pso' ? (
+          {viewMode === 'student' && (
             <>
+              <label style={{ marginRight: '5px', marginLeft: '10px' }}>Filter by Tutor Email:</label>
+              <select onChange={(e) => setSelectedTutor(e.target.value)} value={selectedTutor}>
+                <option value="">All Tutors</option>
+                {tutors.map((tutor) => (
+                  <option key={tutor._id} value={tutor.email}>
+                    {tutor.email}
+                  </option>
+                ))}
+              </select>
+
+              <label style={{ marginRight: '5px', marginLeft: '10px' }}>Filter by Event Type:</label>
+              <select onChange={(e) => setEventTypeFilter(e.target.value)} value={eventTypeFilter}>
+                <option value="">All Events</option>
+                <option value="pso">PSO</option>
+                <option value="office">Office</option>
+                <option value="appointment">Appointment</option>
+              </select>
+
               <label style={{ marginRight: '5px', marginLeft: '10px' }}>Filter by Event Name:</label>
               <select value={eventNameFilter} onChange={(e) => setEventNameFilter(e.target.value)}>
                 <option value="">All Events</option>
@@ -186,19 +205,9 @@ export default function MyCalendar({ user }) {
                 ))}
               </select>
             </>
-          ) : viewMode === 'student' ? (
-            <>
-              <label style={{ marginRight: '5px', marginLeft: '10px' }}>Filter by Tutor Email:</label>
-              <select onChange={(e) => setSelectedTutor(e.target.value)} value={selectedTutor}>
-                <option value="">All Tutors</option>
-                {tutors.map((tutor) => (
-                  <option key={tutor._id} value={tutor.email}>
-                    {tutor.email} {/* Displaying tutor email */}
-                  </option>
-                ))}
-              </select>
-            </>
-          ) : (
+          )}
+
+          {viewMode === 'tutor' && (
             <>
               <label style={{ marginRight: '5px', marginLeft: '10px' }}>Filter by Student Email:</label>
               <select onChange={(e) => setStudentFilter(e.target.value)} value={studentFilter}>
@@ -245,7 +254,7 @@ export default function MyCalendar({ user }) {
                     <option value="">Select Tutor</option>
                     {tutors.map((tutor) => (
                       <option key={tutor._id} value={tutor.email}>
-                        {tutor.email} {/* Displaying tutor email */}
+                        {tutor.email}
                       </option>
                     ))}
                   </select>
