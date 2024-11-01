@@ -244,6 +244,77 @@ router.post('/resend-email', async (req, res) => {
   res.status(200).send('Confirmation email resent');
 });
 
+
+router.put('/update-profile', async (req, res) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+
+  try {
+    // Decode the token to get userId
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    // Now you can use userId in this route
+    const { name, email, password } = req.body;
+    const updates = {};
+    
+    if (name) updates.name = name;
+    if (email) updates.email = email;
+    if (password) updates.password = await bcrypt.hash(password, 10);
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
+    if (!updatedUser) {
+      return res.status(404).send('User not found');
+    }
+
+    res.status(200).send('Profile updated successfully');
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    res.status(500).send('Failed to update profile');
+  }
+});
+
+
+router.delete('/delete-account', async (req, res) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).send('User not found');
+    }
+
+    res.status(200).send('Account deleted successfully');
+  } catch (err) {
+    console.error('Error deleting account:', err);
+    res.status(500).send('Failed to delete account');
+  }
+});
+
+router.put('/update-courses', async (req, res) => {
+  const { courses } = req.body;
+
+  try {
+    // Extract the userId from the JWT token
+    const token = req.header('Authorization').replace('Bearer ', '');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    // Find the user by userId and update the courses field
+    const user = await User.findByIdAndUpdate(userId, { courses }, { new: true });
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    res.status(200).send('Courses updated successfully');
+  } catch (err) {
+    console.error('Error updating courses:', err);
+    res.status(500).send('Failed to update courses');
+  }
+});
+
 // Route to get logged-in user data
 router.get('/me', async (req, res) => {
   const token = req.header('Authorization').replace('Bearer ', '');

@@ -13,6 +13,7 @@ import ConfirmPayment from './components/ConfirmPayment';
 import ReportAccount from './components/ReportAccount';
 import PayLedger from './components/PayLedger';
 import ProtectedRoute from './components/Protectedroute';
+import ProfileSettings from './components/ProfileSettings';
 import Messaging from './components/Messaging';
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
         <Route path="/messaging" element={
             <ProtectedRoute>
               <Messaging />
