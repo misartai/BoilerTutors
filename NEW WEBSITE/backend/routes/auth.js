@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const Message = require('../models/Message');
+const Draft = require('../models/Draft');
 const router = express.Router();
 const adminEmail = 'aryanshahu13@gmail.com';
 let tempUsers = {};  // Temporary storage for users who haven't confirmed email
@@ -345,6 +346,7 @@ const authenticate = (req, res, next) => {
     res.status(400).send('Invalid Token');
   }
 };
+
 // Function to send notification email
 const sendNotificationEmail = async (recipientEmail, messageContent, senderEmail) => {
   const mailOptions = {
@@ -361,8 +363,6 @@ const sendNotificationEmail = async (recipientEmail, messageContent, senderEmail
     console.error('Error sending notification email:', error);
   }
 };
-
-module.exports = sendNotificationEmail;
 
 // Function to send notification email
 const sendAnnouncementEmail = async (recipientEmail, messageContent, senderEmail) => {
@@ -381,7 +381,7 @@ const sendAnnouncementEmail = async (recipientEmail, messageContent, senderEmail
   }
 };
 
-module.exports = sendAnnouncementEmail;
+module.exports = { sendNotificationEmail, sendAnnouncementEmail };
 
 // Route to retrieve conversation history
 router.get('/history/:userId', authenticate, async (req, res) => {
@@ -425,13 +425,7 @@ router.post('/mark-read', authenticate, async (req, res) => {
 // Route to retrieve announcements (if stored as messages with isAnnouncement flag)
 router.get('/announcements', authenticate, async (req, res) => {
   try {
-    const announcements = await Message.find({
-      isAnnouncement: true,
-      receiverId: req.user.userId
-    }).sort({ timestamp: -1 });
-
-    await sendAnnouncementEmail(receiverEmail, content, senderEmail);
-
+    const announcements = await Message.find({ isAnnouncement: true }).sort({ timestamp: -1 });
     res.status(200).json(announcements);
   } catch (err) {
     console.error('Retrieve announcements error:', err);
@@ -440,7 +434,7 @@ router.get('/announcements', authenticate, async (req, res) => {
 });
 
 // Endpoint to get all users
-router.get('/api/users', async (req, res) => {
+router.get('/users', async (req, res) => {
   try {
     const users = await User.find({}); // Fetch all users
     res.json(users);
@@ -462,7 +456,7 @@ router.get('/api/announcements', async (req, res) => {
 });
 
 // Route to save a draft
-router.post('/', async (req, res) => {
+router.post('/save-draft', async (req, res) => {
   const { senderEmail, recipientEmail, content } = req.body;
 
   const draft = new Draft({
@@ -491,25 +485,35 @@ router.get('/:userEmail', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+//send message
+router.post('/send-message', async (req, res) => {
   const { senderEmail, recipientEmail, content } = req.body;
 
+  // Fetch user IDs based on emails
+  const sender = await User.findOne({ email: senderEmail });
+  const receiver = await User.findOne({ email: recipientEmail });
+
+  if (!sender || !receiver) {
+    return res.status(404).send('User not found');
+  }
+
   const newMessage = new Message({
-    senderId,
-    receiverId,
+    senderId: sender._id,
+    receiverId: receiver._id,
     content,
     timestamp: new Date(),
     isAnnouncement: false,
     isRead: false
   });
 
-  const savedMessage = await message.save();
-    try {
-      res.status(201).json(savedMessage);
-    } catch (error) {
-      console.error('Error saving message:', error);
-      res.status(500).json({ message: 'Failed to save message' });
-    }
+  try {
+    const savedMessage = await newMessage.save();
+    res.status(201).json(savedMessage);
+  } catch (error) {
+    console.error('Error saving message:', error);
+    res.status(500).json({ message: 'Failed to save message' });
+  }
 });
+
 
 module.exports = router;

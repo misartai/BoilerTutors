@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from 'react';
 
 export default function Messages({ user }) {
-  const { email: userEmail, isTutor } = user;
+  const { email: userEmail } = user;
   const [messages, setMessages] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [announcements, setAnnouncements] = useState([]);
-  const [drafts, setDrafts] = useState([]);
+  const [draft, setDrafts] = useState([]);
   const [view, setView] = useState('messages');
   const [announcementContent, setAnnouncementContent] = useState('');
 
   useEffect(() => {
     const handleBeforeExit = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+
       if (messageContent && selectedContact) {
         handleSaveDraft();
       }
     };
+
     window.addEventListener('beforeunload', handleBeforeExit);
     return () => window.removeEventListener('beforeunload', handleBeforeExit);
   }, [messageContent, selectedContact]);
@@ -40,7 +44,10 @@ export default function Messages({ user }) {
         const response = await fetch(`http://localhost:5000/api/users`);
         if (!response.ok) throw new Error('Failed to fetch contacts');
         const data = await response.json();
-        setContacts(data);
+        const filteredContacts = data.filter(
+          (contact) => contact.email !== userEmail
+        );
+        setContacts(filteredContacts);
       } catch (error) {
         console.error('Error fetching contacts:', error);
       }
@@ -64,6 +71,15 @@ export default function Messages({ user }) {
     };
     fetchAnnouncements();
   }, []);
+
+  useEffect(() => {
+    const intervalID = setInterval(() => {
+        if (messageContent && selectedContact) {
+            handleSaveDraft();
+        }
+    }, 5000);
+    return () => clearInterval(intervalID);
+  }, [messageContent, selectedContact]);
 
   const handleSaveDraft = () => {
       if (!messageContent || !selectedContact) {
@@ -131,6 +147,12 @@ export default function Messages({ user }) {
 
   const handleSendAnnouncement = async (e) => {
     e.preventDefault();
+
+    if (user.accountType !== 'professor') {
+        alert('Only professors can send announcements.');
+        return;
+    }
+
     if (!announcementContent) {
       alert('Please enter an announcement.');
       return;
@@ -178,7 +200,20 @@ export default function Messages({ user }) {
  return (
      <div className="main">
        <div className="messages-container" style={{ display: 'flex', height: '100vh' }}>
-
+         {user.accountType === 'professor' && (
+           <form onSubmit={handleSendAnnouncement} style={{ display: 'flex', marginTop: '10px' }}>
+             <input
+               type="text"
+               placeholder="Type an announcement here..."
+               value={announcementContent}
+               onChange={(e) => setAnnouncementContent(e.target.value)}
+               style={{ flexGrow: 1, padding: '10px', borderRadius: '5px 0 0 5px', border: '1px solid #ddd' }}
+             />
+             <button type="submit" style={{ padding: '10px', borderRadius: '0 5px 5px 0', border: '1px solid #ddd', background: '#4CAF50', color: '#fff' }}>
+               Send Announcement
+             </button>
+           </form>
+         )}
          {/* Sidebar with Contact List */}
          <div className="recipients-pane" style={{ width: '25%', borderRight: '1px solid #ddd', padding: '10px' }}>
            <h3>Contacts</h3>

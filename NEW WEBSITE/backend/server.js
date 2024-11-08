@@ -374,20 +374,42 @@ const announcementSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-//Send Message
+//Send Message or Announcement
+// Send Message or Announcement
 app.post('/api/messages', async (req, res) => {
   const { senderEmail, recipientEmail, content, isAnnouncement = false } = req.body;
 
   try {
-    const newMessage = new Message({
-      senderEmail,
-      recipientEmail,
-      content,
-      isAnnouncement,
-      isRead: false,
-      createdAt: new Date(),
+    // Fetch the user from the database
+    const sender = await User.findOne({ email: senderEmail });
+
+    // Check if the message is an announcement and the sender is a professor
+    if (isAnnouncement && sender.accountType !== 'professor') {
+      return res.status(403).json({ error: 'Only professors can send announcements.' });
+    }
+
+    // Prepare message object
+    const messageSchema = new mongoose.Schema({
+      senderEmail: { type: String, required: true },
+      recipientEmail: { type: String }, // Optional for announcements
+      content: { type: String, required: true },
+      isAnnouncement: { type: Boolean, default: false },
+      isRead: { type: Boolean, default: false },
+      createdAt: { type: Date, default: Date.now },
     });
 
+    module.exports = mongoose.model('Message', messageSchema);
+
+
+    // If it's not an announcement, recipientEmail is required
+    if (!isAnnouncement) {
+      if (!recipientEmail) {
+        return res.status(400).json({ error: 'Recipient email is required for regular messages.' });
+      }
+      messageData.recipientEmail = recipientEmail;
+    }
+
+    const newMessage = new Message(messageData);
     const savedMessage = await newMessage.save();
     res.status(201).json(savedMessage);
   } catch (error) {
@@ -436,19 +458,6 @@ app.get('/api/users', async (req, res) => {
   } catch (error) {
     console.error('Error fetching contacts:', error);
     res.status(500).json({ error: 'Failed to fetch contacts' });
-  }
-});
-
-//Send announcement
-app.post('/api/announcements', async (req, res) => {
-  const { senderEmail, content } = req.body;
-  try {
-    const newAnnouncement = new Announcement({ senderEmail, content });
-    const savedAnnouncement = await newAnnouncement.save();
-    res.status(201).json(savedAnnouncement);
-  } catch (error) {
-    console.error('Error saving announcement:', error);
-    res.status(500).json({ error: 'Failed to save announcement' });
   }
 });
 
