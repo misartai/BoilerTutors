@@ -1,17 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 export default function Messages({ user }) {
-  const { email: userEmail, accountType } = user;
-  const [messages, setMessages] = useState([
-    {senderEmail: 'misartai@purdue.edu', recipientEmail: "ashahu@purdue.edu", content: 'Hello!', timestamp: new Date() },
-    {senderEmail: 'ashahu@purdue.edu', recipientEmail: 'misartai@purdue.edu', content: 'How are you?', timestamp: new Date() },
-    {senderEmail: 'ashahu@purdue.edu', recipientEmail: 'misartai@purdue.edu', content: 'How are classes?', timestamp: new Date() },
-  ]);
-  const [contacts, setContacts] = useState([
-    {name: 'ashahu', email: 'ashahu@purdue.edu'},
-    {name: 'Sahithi Gokavarapu', email: 'sgokavar@purdue.edu'},
-    {name: 'dananth', email: 'dananth@purdue.edu'},
-  ]);
+  const { email: userEmail, isTutor } = user;
+  const [messages, setMessages] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [announcements, setAnnouncements] = useState([]);
@@ -86,7 +78,6 @@ export default function Messages({ user }) {
       };
 
       setDrafts((prevDrafts) => [...prevDrafts, draft]); // Save to drafts
-      setMessageContent(''); // Clear message input after saving
     };
 
   const filteredMessages = messages.filter((message) =>
@@ -105,6 +96,11 @@ export default function Messages({ user }) {
       return;
     }
 
+    if (!selectedContact) {
+        alert('Please select a contact to send a message to.')
+        return;
+    }
+
     const newMessage = {
       senderEmail: userEmail,
       recipientEmail: selectedContact,
@@ -121,7 +117,7 @@ export default function Messages({ user }) {
       if (!response.ok) throw new Error('Failed to send message');
       const savedMessage = await response.json();
       setMessages([...messages, savedMessage]);
-      setMessageContent('');
+      //setMessageContent('');
     } catch (error) {
       console.error('Error sending message:', error);
       alert('There was an error sending the message. Please try again.');
@@ -143,7 +139,7 @@ export default function Messages({ user }) {
     const newAnnouncement = {
       senderEmail: userEmail,
       content: announcementContent,
-      isAnnouncement: true, // Set this flag to identify as an announcement
+      isAnnouncement: true,
     };
 
     try {
@@ -255,7 +251,7 @@ export default function Messages({ user }) {
              }} style={{ display: 'flex', marginTop: '10px' }}>
                <input
                  type="text"
-                 placeholder="Type a message"
+                 placeholder="Type a message here..."
                  value={messageContent}
                  onChange={(e) => setMessageContent(e.target.value)}
                  style={{ flexGrow: 1, padding: '10px', borderRadius: '5px 0 0 5px', border: '1px solid #ddd' }}

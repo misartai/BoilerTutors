@@ -225,6 +225,7 @@ app.post('/api/reports', async (req, res) => {
     res.status(500).json({ error: 'Failed to submit report' });
   }
 });
+
 app.get('/api/reports/:studentId', async (req, res) => {
   const { studentId } = req.params;
 
@@ -240,6 +241,7 @@ app.get('/api/reports/:studentId', async (req, res) => {
     res.status(500).json({ error: 'Error fetching reports' });
   }
 });
+
 app.get('/api/reports/details/:trackingId', async (req, res) => {
   const { trackingId } = req.params;
 
@@ -257,17 +259,6 @@ app.get('/api/reports/details/:trackingId', async (req, res) => {
     res.status(500).json({ error: 'Error fetching report details' });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
 
 // ----- Event Functionality -----
 
@@ -361,6 +352,103 @@ app.post('/api/events', async (req, res) => {
   } catch (err) {
     console.error('Failed to create event:', err); // Log error details
     res.status(500).send('Failed to create event');
+  }
+});
+
+//--Messaging Functions--
+
+//Required schemas
+const messageSchema = new mongoose.Schema({
+  senderEmail: { type: String, required: true },
+  recipientEmail: { type: String, required: true },
+  content: { type: String, required: true },
+  isAnnouncement: { type: Boolean, default: false },
+  isRead: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+});
+
+
+const announcementSchema = new mongoose.Schema({
+  senderEmail: { type: String, required: true },
+  content: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+//Send Message
+app.post('/api/messages', async (req, res) => {
+  const { senderEmail, recipientEmail, content, isAnnouncement = false } = req.body;
+
+  try {
+    const newMessage = new Message({
+      senderEmail,
+      recipientEmail,
+      content,
+      isAnnouncement,
+      isRead: false,
+      createdAt: new Date(),
+    });
+
+    const savedMessage = await newMessage.save();
+    res.status(201).json(savedMessage);
+  } catch (error) {
+    console.error('Error saving message:', error);
+    res.status(500).json({ error: 'Failed to save message' });
+  }
+});
+
+// Fetch messages for a user
+app.get('/api/messages', async (req, res) => {
+  const { userEmail } = req.query;
+
+  try {
+    const messages = await Message.find({
+      $or: [{ senderEmail: userEmail }, { recipientEmail: userEmail }],
+    }).sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Update message read status
+app.patch('/api/messages/:messageId', async (req, res) => {
+  const { messageId } = req.params;
+  const { isRead } = req.body;
+  try {
+    const updatedMessage = await Message.findByIdAndUpdate(
+      messageId,
+      { isRead },
+      { new: true }
+    );
+    res.json(updatedMessage);
+  } catch (error) {
+    console.error('Error updating message status:', error);
+    res.status(500).json({ error: 'Failed to update message status' });
+  }
+});
+
+// Fetch contacts
+app.get('/api/users', async (req, res) => {
+  try {
+    const contacts = await User.find({}, 'name email accountType isTutor');
+    res.json(contacts);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ error: 'Failed to fetch contacts' });
+  }
+});
+
+//Send announcement
+app.post('/api/announcements', async (req, res) => {
+  const { senderEmail, content } = req.body;
+  try {
+    const newAnnouncement = new Announcement({ senderEmail, content });
+    const savedAnnouncement = await newAnnouncement.save();
+    res.status(201).json(savedAnnouncement);
+  } catch (error) {
+    console.error('Error saving announcement:', error);
+    res.status(500).json({ error: 'Failed to save announcement' });
   }
 });
 
