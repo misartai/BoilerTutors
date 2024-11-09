@@ -10,6 +10,8 @@ const DiscussionBoard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showFavourites, setShowFavourites] = useState(false);
+  const [showPostHistory, setShowPostHistory] = useState(false);
+  const [deletedPosts, setDeletedPosts] = useState([]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -23,6 +25,7 @@ const DiscussionBoard = () => {
 
     fetchPosts();
   }, []);
+
 
   const handleCreatePost = async (e) => {
     e.preventDefault();
@@ -74,6 +77,24 @@ const DiscussionBoard = () => {
     }
   };
 
+  const fetchDeletedPosts = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/posts/deleted');
+      console.log('Deleted posts:', response.data); // Debugging line
+      setDeletedPosts(response.data);
+    } catch (error) {
+      console.error('Error fetching deleted posts:', error);
+    }
+  };
+  
+  
+  const handleShowPostHistory = () => {
+    setShowPostHistory(!showPostHistory);
+    if (!showPostHistory) {
+      fetchDeletedPosts();
+    }
+  };
+
   const toggleFavourite = async (postId) => {
     console.log("Favourite button clicked for post:", postId); // Debugging line
     try {
@@ -120,7 +141,7 @@ const filteredPosts = sortedPosts
   return (
     <div>
       <h1 className="web-name">Discussion Board</h1>
-
+  
       {/* Options */}
       <div className="options">
         <button onClick={() => setShowCreatePost(!showCreatePost)}>
@@ -129,6 +150,9 @@ const filteredPosts = sortedPosts
         <button onClick={() => setShowFavourites(!showFavourites)}>
           {showFavourites ? 'Show All Posts' : 'Show Favourites'}
         </button>
+        <button onClick={handleShowPostHistory}>
+          {showPostHistory ? 'Hide Post History' : 'Show Post History'}
+        </button>
         <input
           type="text"
           placeholder="Search posts..."
@@ -136,7 +160,7 @@ const filteredPosts = sortedPosts
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-
+  
       {/* Create Post Form */}
       {showCreatePost && (
         <form onSubmit={handleCreatePost}>
@@ -169,29 +193,51 @@ const filteredPosts = sortedPosts
           </p>
         </form>
       )}
-
+  
       <hr />
-
-      <h2>Posts</h2>
-      {filteredPosts.length === 0 ? (
-  <p>No posts found.</p>
+  
+      {showPostHistory ? (
+  <div>
+    <h2>Deleted Posts</h2>
+    {deletedPosts.length === 0 ? (
+      <p>No deleted posts found.</p>
+    ) : (
+      deletedPosts.map((post) => (
+        <div key={post._id} className="post deleted">
+          <h2>{post.title}</h2>
+          <p>{post.content}</p>
+          <div className="post-meta">
+            <span>Deleted by: {post.author}</span>
+            <span>Deleted at: {new Date(post.createdAt).toLocaleString()}</span>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
 ) : (
-  filteredPosts.map((post) => (
-    <Post
-      key={post._id} // The unique key added to ensure React properly re-renders the specific post
-      post={post}
-      currentUserId={'currentUserId'}
-      handleDeletePost={handleDeletePost}
-      handleEditPost={handleEditPost}
-      handleAddReply={handleAddReply}
-      toggleFavourite={toggleFavourite}
-      toggleBookmark={toggleBookmark} // New prop for bookmarking
-    />
-  ))
+  <>
+    <h2>Posts</h2>
+    {filteredPosts.length === 0 ? (
+      <p>No posts found.</p>
+    ) : (
+      filteredPosts.map((post) => (
+        <Post
+          key={post._id}
+          post={post}
+          currentUserId={'currentUserId'}
+          handleDeletePost={handleDeletePost}
+          handleEditPost={handleEditPost}
+          handleAddReply={handleAddReply}
+          toggleFavourite={toggleFavourite}
+          toggleBookmark={toggleBookmark}
+        />
+      ))
+    )}
+  </>
 )}
-
     </div>
   );
+
 };
 
 export default DiscussionBoard;

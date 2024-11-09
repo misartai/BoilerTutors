@@ -37,6 +37,7 @@ const postSchema = new mongoose.Schema({
   ],
   isFavourite: { type: Boolean, default: false },
   isBookmarked: { type: Boolean, default: false } // New field for bookmarks
+  isDeleted: { type: Boolean, default: false }
 });
 
 const Post = mongoose.model('Post', postSchema);
@@ -240,10 +241,27 @@ app.get('/posts/favourites', async (req, res) => {
 // Delete a post
 app.delete('/posts/:id', async (req, res) => {
   try {
-    await Post.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Post deleted successfully' });
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    post.isDeleted = true; // Mark post as deleted
+    const updatedPost = await post.save();
+    res.json({ message: 'Post deleted successfully', post: updatedPost });
   } catch (error) {
     res.status(500).json({ error: 'Error deleting post' });
+  }
+});
+
+
+// Get all deleted posts
+app.get('/posts/deleted', async (req, res) => {
+  try {
+    const deletedPosts = await Post.find({ isDeleted: true });
+    res.json(deletedPosts);
+  } catch (error) {
+    console.error('Error fetching deleted posts:', error);
+    res.status(500).json({ error: 'Error fetching deleted posts' });
   }
 });
 
