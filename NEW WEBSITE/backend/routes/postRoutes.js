@@ -1,7 +1,20 @@
 const express = require('express');
 const Post = require('../models/Post');
-const { authenticate } = require('./auth'); // Correctly import authenticate function
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+
+const authenticate = (req, res, next) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+  if (!token) return res.status(401).send('Access Denied');
+
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified; // Attach user data to req for later use
+    next();
+  } catch (err) {
+    res.status(400).send('Invalid Token');
+  }
+};
 
 // Create a new post
 router.post('/create', authenticate, async (req, res) => {
