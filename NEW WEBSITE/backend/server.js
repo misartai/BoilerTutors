@@ -321,9 +321,6 @@ app.get('/api/payments', async (req, res) => {
 
 
 
-
-
-
 // ----- Event Functionality -----
 
 // Function to calculate the reminder time based on user's preference
@@ -428,40 +425,110 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-// Route to accept the appointment
-app.get('/api/accept-appointment/:eventId', async (req, res) => {
-  const { eventId } = req.params;
+//--Messaging Functions--
+
+//Required schemas
+const messageSchema = new mongoose.Schema({
+  senderEmail: { type: String, required: true },
+  recipientEmail: { type: String, required: true },
+  content: { type: String, required: true },
+  isAnnouncement: { type: Boolean, default: false },
+  isRead: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+});
+
+
+const announcementSchema = new mongoose.Schema({
+  senderEmail: { type: String, required: true },
+  content: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+//Send Message or Announcement
+// Send Message or Announcement
+app.post('/api/messages', async (req, res) => {
+  const { senderEmail, recipientEmail, content, isAnnouncement = false } = req.body;
 
   try {
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).send('Event not found');
+    // Fetch the user from the database
+    const sender = await User.findOne({ email: senderEmail });
+
+    // Check if the message is an announcement and the sender is a professor
+    if (isAnnouncement && sender.accountType !== 'professor') {
+      return res.status(403).json({ error: 'Only professors can send announcements.' });
     }
 
-    // Logic to mark the event as accepted (you could add a field for this in the schema)
-    // For example, you might add a field called "accepted" to the event and update it here
-    event.accepted = true; // Example field to indicate acceptance
-    await event.save();
+    // Prepare message object
+    const messageSchema = new mongoose.Schema({
+      senderEmail: { type: String, required: true },
+      recipientEmail: { type: String }, // Optional for announcements
+      content: { type: String, required: true },
+      isAnnouncement: { type: Boolean, default: false },
+      isRead: { type: Boolean, default: false },
+      createdAt: { type: Date, default: Date.now },
+    });
 
-    res.send('Appointment accepted successfully.');
+    module.exports = mongoose.model('Message', messageSchema);
+
+
+    // If it's not an announcement, recipientEmail is required
+    if (!isAnnouncement) {
+      if (!recipientEmail) {
+        return res.status(400).json({ error: 'Recipient email is required for regular messages.' });
+      }
+      messageData.recipientEmail = recipientEmail;
+    }
+
+    const newMessage = new Message(messageData);
+    const savedMessage = await newMessage.save();
+    res.status(201).json(savedMessage);
   } catch (error) {
-    console.error('Error accepting appointment:', error);
-    res.status(500).send('Error accepting appointment');
+    console.error('Error saving message:', error);
+    res.status(500).json({ error: 'Failed to save message' });
   }
 });
-app.post('/refresh-token', (req, res) => {
-  const { token } = req.body;
 
-  // Verify the token and get the payload
-  jwt.verify(token, secretKey, (err, decoded) => {
-    if (err) {
-      return res.status(401).send('Token is invalid or expired');
-    }
+// Fetch messages for a user
+app.get('/api/messages', async (req, res) => {
+  const { userEmail } = req.query;
 
-    // Create a new token
-    const newToken = jwt.sign({ userId: decoded.userId }, secretKey, { expiresIn: '1h' });
-    res.json({ token: newToken });
-  });
+  try {
+    const messages = await Message.find({
+      $or: [{ senderEmail: userEmail }, { recipientEmail: userEmail }],
+    }).sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Update message read status
+app.patch('/api/messages/:messageId', async (req, res) => {
+  const { messageId } = req.params;
+  const { isRead } = req.body;
+  try {
+    const updatedMessage = await Message.findByIdAndUpdate(
+      messageId,
+      { isRead },
+      { new: true }
+    );
+    res.json(updatedMessage);
+  } catch (error) {
+    console.error('Error updating message status:', error);
+    res.status(500).json({ error: 'Failed to update message status' });
+  }
+});
+
+// Fetch contacts
+app.get('/api/users', async (req, res) => {
+  try {
+    const contacts = await User.find({}, 'name email accountType isTutor');
+    res.json(contacts);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ error: 'Failed to fetch contacts' });
+  }
 });
 
 // Start the server

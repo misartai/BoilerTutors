@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const Message = require('../models/Message');
+const Draft = require('../models/Draft');
 const router = express.Router();
 const adminEmail = 'aryanshahu13@gmail.com';
 let tempUsers = {};  // Temporary storage for users who haven't confirmed email
@@ -244,6 +245,77 @@ router.post('/resend-email', async (req, res) => {
   res.status(200).send('Confirmation email resent');
 });
 
+
+router.put('/update-profile', async (req, res) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+
+  try {
+    // Decode the token to get userId
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    // Now you can use userId in this route
+    const { name, email, password } = req.body;
+    const updates = {};
+    
+    if (name) updates.name = name;
+    if (email) updates.email = email;
+    if (password) updates.password = await bcrypt.hash(password, 10);
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
+    if (!updatedUser) {
+      return res.status(404).send('User not found');
+    }
+
+    res.status(200).send('Profile updated successfully');
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    res.status(500).send('Failed to update profile');
+  }
+});
+
+
+router.delete('/delete-account', async (req, res) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).send('User not found');
+    }
+
+    res.status(200).send('Account deleted successfully');
+  } catch (err) {
+    console.error('Error deleting account:', err);
+    res.status(500).send('Failed to delete account');
+  }
+});
+
+router.put('/update-courses', async (req, res) => {
+  const { courses } = req.body;
+
+  try {
+    // Extract the userId from the JWT token
+    const token = req.header('Authorization').replace('Bearer ', '');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
+    // Find the user by userId and update the courses field
+    const user = await User.findByIdAndUpdate(userId, { courses }, { new: true });
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    res.status(200).send('Courses updated successfully');
+  } catch (err) {
+    console.error('Error updating courses:', err);
+    res.status(500).send('Failed to update courses');
+  }
+});
+
 // Route to get logged-in user data
 router.get('/me', async (req, res) => {
   const token = req.header('Authorization').replace('Bearer ', '');
@@ -274,6 +346,7 @@ const authenticate = (req, res, next) => {
     res.status(400).send('Invalid Token');
   }
 };
+
 // Function to send notification email
 const sendNotificationEmail = async (recipientEmail, messageContent, senderEmail) => {
   const mailOptions = {
@@ -290,8 +363,6 @@ const sendNotificationEmail = async (recipientEmail, messageContent, senderEmail
     console.error('Error sending notification email:', error);
   }
 };
-
-module.exports = sendNotificationEmail;
 
 // Function to send notification email
 const sendAnnouncementEmail = async (recipientEmail, messageContent, senderEmail) => {
@@ -310,31 +381,7 @@ const sendAnnouncementEmail = async (recipientEmail, messageContent, senderEmail
   }
 };
 
-module.exports = sendAnnouncementEmail;
-;
-// Route to send a message
-router.post('/api/messages', async (req, res) => {
-  const { senderEmail, receiverEmail, content } = req.body;
-
-  try {
-    // Create a new message
-    const message = new Message({
-      senderEmail,
-      receiverEmail,
-      content
-    });
-
-    // Save to MongoDB
-    const savedMessage = await message.save();
-
-    await sendNotificationEmail(receiverEmail, content, senderEmail);
-
-    res.status(201).json(savedMessage);
-  } catch (err) {
-    console.error('Error saving message:', err);
-    res.status(500).send('Failed to save message');
-  }
-});
+module.exports = { sendNotificationEmail, sendAnnouncementEmail };
 
 // Route to retrieve conversation history
 router.get('/history/:userId', authenticate, async (req, res) => {
@@ -378,17 +425,22 @@ router.post('/mark-read', authenticate, async (req, res) => {
 // Route to retrieve announcements (if stored as messages with isAnnouncement flag)
 router.get('/announcements', authenticate, async (req, res) => {
   try {
-    const announcements = await Message.find({
-      isAnnouncement: true,
-      receiverId: req.user.userId
-    }).sort({ timestamp: -1 });
-
-    await sendAnnouncementEmail(receiverEmail, content, senderEmail);
-
+    const announcements = await Message.find({ isAnnouncement: true }).sort({ timestamp: -1 });
     res.status(200).json(announcements);
   } catch (err) {
     console.error('Retrieve announcements error:', err);
     res.status(500).send('Failed to retrieve announcements');
+  }
+});
+
+// Endpoint to get all users
+router.get('/users', async (req, res) => {
+  try {
+    const users = await User.find({}); // Fetch all users
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users' });
   }
 });
 
@@ -404,7 +456,7 @@ router.get('/api/announcements', async (req, res) => {
 });
 
 // Route to save a draft
-router.post('/', async (req, res) => {
+router.post('/save-draft', async (req, res) => {
   const { senderEmail, recipientEmail, content } = req.body;
 
   const draft = new Draft({
@@ -432,5 +484,36 @@ router.get('/:userEmail', async (req, res) => {
     res.status(500).json({ message: 'Error fetching drafts' });
   }
 });
+
+//send message
+router.post('/send-message', async (req, res) => {
+  const { senderEmail, recipientEmail, content } = req.body;
+
+  // Fetch user IDs based on emails
+  const sender = await User.findOne({ email: senderEmail });
+  const receiver = await User.findOne({ email: recipientEmail });
+
+  if (!sender || !receiver) {
+    return res.status(404).send('User not found');
+  }
+
+  const newMessage = new Message({
+    senderId: sender._id,
+    receiverId: receiver._id,
+    content,
+    timestamp: new Date(),
+    isAnnouncement: false,
+    isRead: false
+  });
+
+  try {
+    const savedMessage = await newMessage.save();
+    res.status(201).json(savedMessage);
+  } catch (error) {
+    console.error('Error saving message:', error);
+    res.status(500).json({ message: 'Failed to save message' });
+  }
+});
+
 
 module.exports = router;
