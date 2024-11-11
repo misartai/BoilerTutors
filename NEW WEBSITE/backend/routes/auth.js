@@ -293,25 +293,25 @@ router.delete('/delete-account', async (req, res) => {
   }
 });
 
-router.put('/update-courses', async (req, res) => {
-  const { courses } = req.body;
+router.put('/update-tutor-status', async (req, res) => {
+  const { isTutor } = req.body;
 
   try {
-    // Extract the userId from the JWT token
+    // Retrieve the userId from the token
     const token = req.header('Authorization').replace('Bearer ', '');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
-    // Find the user by userId and update the courses field
-    const user = await User.findByIdAndUpdate(userId, { courses }, { new: true });
+    // Find and update the user's tutor status
+    const user = await User.findByIdAndUpdate(userId, { isTutor }, { new: true });
     if (!user) {
       return res.status(404).send('User not found');
     }
 
-    res.status(200).send('Courses updated successfully');
+    res.status(200).send('Tutor status updated successfully');
   } catch (err) {
-    console.error('Error updating courses:', err);
-    res.status(500).send('Failed to update courses');
+    console.error('Error updating tutor status:', err);
+    res.status(500).send('Failed to update tutor status');
   }
 });
 
