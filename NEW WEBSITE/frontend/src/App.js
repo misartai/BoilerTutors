@@ -8,7 +8,13 @@ import PendingApproval from './components/PendingApproval';
 import ForgotPassword from './components/ForgottenPassword';
 import ConfirmationCode from './components/ConfirmCode';
 import NewPassword from './components/NewPassword';
+import RateTutor from './components/RateTutor';
+import ConfirmPayment from './components/ConfirmPayment';
+import ReportAccount from './components/ReportAccount';
+import PayLedger from './components/PayLedger';
 import ProtectedRoute from './components/Protectedroute';
+import ProfileSettings from './components/ProfileSettings';
+import Messaging from './components/Messaging';
 
 function App() {
   return (
@@ -22,12 +28,23 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/confirm-code" element={<ConfirmationCode />} />
         <Route path="/new-password" element={<NewPassword />} />
+        <Route path="/rate-tutor" element={<RateTutor />} />
+        <Route path="/confirm-payment" element={<ConfirmPayment />} />
+        <Route path="/report-account" element={<ReportAccount />} />
+        <Route path="/pay-ledger" element={<PayLedger />} />
         <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
           }
         />
+        <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
+        <Route path="/messaging" element={
+            <ProtectedRoute>
+              <Messaging />
+            </ProtectedRoute>
+          }
+         />
         {/* Add other routes as needed */}
       </Routes>
     </Router>

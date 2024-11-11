@@ -1,0 +1,143 @@
+/* General styling for the calendar container */
+.calendar-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 0; /* No margin around the container */
+  padding: 20px; /* Add some padding around the container */
+}
+
+/* Style for the filters container */
+.filters {
+  width: 100%; /* Full width above the calendar */
+  background-color: #f7f7f7; /* Light background for contrast */
+  padding: 10px 15px; /* Moderate padding for aesthetics */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  margin-bottom: 15px; /* Space between filters and calendar */
+}
+
+/* Adjusting calendar width */
+.calendar {
+  width: 60%;
+  margin-top: 10px; /* Slight top margin for spacing */
+}
+
+/* Styling for the booking form */
+.booking-form {
+  width: 35%;
+  background-color: #ffffff; /* White background for contrast */
+  padding: 15px; /* Consistent padding */
+  border-radius: 8px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative; /* Position relative for better alignment */
+}
+
+/* Heading style in the booking form */
+.booking-form h2 {
+  margin-bottom: 15px; /* Reduced margin for better fit */
+}
+
+/* Style for each form group */
+.booking-form div {
+  margin-bottom: 8px; /* Reduced margin */
+}
+
+/* Label styles */
+.booking-form label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 4px; /* Reduced margin */
+}
+
+/* Input styles */
+.booking-form input,
+.booking-form select {
+  width: 100%;
+  padding: 8px; /* Increase padding for better usability */
+  border: 1px solid #ddd; /* Light border */
+  border-radius: 5px; /* Rounded corners */
+  box-sizing: border-box;
+}
+
+/* Focus state for inputs */
+.booking-form input:focus,
+.booking-form select:focus {
+  border-color: #007bff; /* Highlight border on focus */
+  outline: none; /* Remove default outline */
+}
+
+/* Button styles */
+.booking-form button {
+  margin-top: 10px; /* Space above the button */
+  padding: 10px 15px;
+  background-color: #007bff; /* Primary button color */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s; /* Smooth transition */
+}
+
+/* Button hover effect */
+.booking-form button:hover {
+  background-color: #0056b3; /* Darken button on hover */
+}
+
+/* Event styling */
+.fc-event {
+  white-space: normal; 
+  word-wrap: break-word; 
+  border-radius: 5px; /* Rounded corners for events */
+  padding: 5px; /* Padding for event text */
+  background-color: #e3f2fd; /* Light background for events */
+  border: 1px solid #90caf9; /* Light border */
+}
+
+/* Event title styling */
+.fc-title {
+  font-size: 14px; 
+  color: #333; /* Dark color for event titles */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .calendar-container {
+    flex-direction: column; /* Stack elements vertically */
+  }
+
+  .calendar, .booking-form {
+    width: 100%; /* Full width on small screens */
+  }
+}
+
+/* Target the FullCalendar toolbar */
+.fc-toolbar.fc-header-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Align "Today" button and navigation arrows in a row */
+.fc-toolbar-chunk:first-child {
+  display: flex;
+  gap: 5px; /* Space between Today and arrows */
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ensure buttons appear side by side */
+.fc-button-group {
+  display: flex;
+}
+
+.event-type.appointment {
+  color: #1e90ff;
+}
+.event-type.pso {
+  color: #ffd700;
+}
+.event-type.office {
+  color: #ff6347;
+}
+
