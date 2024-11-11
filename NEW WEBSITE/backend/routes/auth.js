@@ -497,15 +497,15 @@ router.post('/send-message', async (req, res) => {
       return res.status(404).send('Sender or recipient not found');
     }
 
-    // Construct the new message
     const newMessage = new Message({
       senderId: sender._id,
       receiverId: receiver._id,
-      content,
-      timestamp: new Date(),
+      content: messageData.content,
+      createdAt: new Date(),
       isAnnouncement: false,
       isRead: false,
     });
+
 
   try {
     // Save the message to MongoDB

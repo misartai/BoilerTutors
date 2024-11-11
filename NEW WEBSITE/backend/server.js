@@ -9,6 +9,7 @@ const Event = require('./models/Event'); // Import the Event model
 const Message = require('./models/Message'); //Import Message model
 const postRoutes = require('./routes/postRoutes'); // Import post routes
 const draftsRouter = require('./models/Draft');
+const { sendNotificationEmail, sendAnnouncementEmail } = require('./routes/auth');
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -369,7 +370,6 @@ const messageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-
 const announcementSchema = new mongoose.Schema({
   senderEmail: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   content: { type: String, required: true },
@@ -377,12 +377,18 @@ const announcementSchema = new mongoose.Schema({
 });
 
 //Send Message or Announcement
+
 app.post('/api/messages', async (req, res) => {
   const { senderEmail, recipientEmail, content, isAnnouncement = false } = req.body;
 
   try {
     const sender = await User.findOne({ email: senderEmail });
 
+    if (!sender) {
+      return res.status(404).json({ error: 'Sender not found' });
+    }
+
+    //defensive clause, isAnnoucement SHOULD NOT be true here unless not changed elsewhere
     if (isAnnouncement && sender.accountType !== 'professor') {
       return res.status(403).json({ error: 'Only professors can send announcements.' });
     }
@@ -399,6 +405,10 @@ app.post('/api/messages', async (req, res) => {
 
     const newMessage = new Message(messageData);
     const savedMessage = await newMessage.save();
+
+    if (optInNotifications) {
+        await sendNotificationEmail(recipientEmail, content, senderEmail);
+    }
 
     res.status(201).json(savedMessage);
   } catch (error) {
