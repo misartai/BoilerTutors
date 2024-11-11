@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,14 +7,46 @@ function ProfileSettings() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isTutor, setIsTutor] = useState(false); // Tutor mode state
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [selectedCourses, setSelectedCourses] = useState(['CS 307', 'CS 381']);
   const navigate = useNavigate();
 
-  const courses = ['CS 307', 'CS 381'];
   // Password complexity regex
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setIsTutor(response.data.isTutor); // Set initial tutor status from user data
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Handle tutor mode submission
+  const handleSubmitTutor = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        '/api/auth/update-tutor-status',
+        { isTutor },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessage(`Tutor mode ${isTutor ? 'enabled' : 'disabled'} successfully`);
+    } catch (err) {
+      console.error('Error updating tutor status:', err);
+      setError('Failed to update tutor status');
+    }
+  };
 
   // Update name
   const handleNameUpdate = async (e) => {
@@ -91,30 +123,8 @@ function ProfileSettings() {
     }
   };
 
-
-  const handleCourseChange = async (course) => {
-    setSelectedCourses((prevSelectedCourses) => {
-      const newSelectedCourses = prevSelectedCourses.includes(course)
-        ? prevSelectedCourses.filter((c) => c !== course)
-        : [...prevSelectedCourses, course];
-      
-      // Send updated course list to the backend
-      updateCourses(newSelectedCourses);
-      return newSelectedCourses;
-    });
-  };
-  
-  // Function to update courses on the backend
-  const updateCourses = async (courses) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put('/api/auth/update-courses', { courses }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-    } catch (err) {
-      console.error('Error updating courses:', err);
-      setError('Failed to update courses');
-    }
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
   };
 
 
@@ -164,21 +174,26 @@ function ProfileSettings() {
         <button type="submit">Update Password</button>
       </form>
 
-      {/* Courses Section */}
-      <div>
-        <h3>Courses</h3>
-        {courses.map((course) => (
-          <div key={course}>
-            <input
-              type="checkbox"
-              id={course}
-              checked={selectedCourses.includes(course)} // Pre-selected checkboxes
-              onChange={() => handleCourseChange(course)}
-            />
-            <label htmlFor={course}>{course}</label>
-          </div>
-        ))}
+      {/* Tutor Mode Toggle */}
+      <div style={{ border: '1px solid #ccc', padding: '15px', margin: '15px 0' }}>
+        <h3>Tutor Mode</h3>
+        <label>
+          <input
+            type="checkbox"
+            checked={isTutor}
+            onChange={() => setIsTutor(!isTutor)}
+          />
+          Enable Tutor Mode
+        </label>
+        <button onClick={handleSubmitTutor} style={{ marginLeft: '10px' }}>
+          Submit
+        </button>
       </div>
+
+      {/* Go Back to Dashboard Button */}
+      <button onClick={handleBackToDashboard} style={{ marginTop: '20px', display: 'block' }}>
+        Back to Dashboard
+      </button>
 
       {/* Delete Account Button */}
       <button onClick={handleDeleteAccount} style={{ color: 'red', marginTop: '20px' }}>
