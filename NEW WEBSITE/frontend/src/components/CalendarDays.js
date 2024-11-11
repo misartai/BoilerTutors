@@ -17,6 +17,7 @@ export default function MyCalendar({ user }) {
     tutorEmail: '',
     notifyTime: '1 hour',
     optInNotifications: true,
+    eventType: '', // Added eventType to form data
   });
   const [tutors, setTutors] = useState([]);
   const [selectedTutor, setSelectedTutor] = useState('');
@@ -48,13 +49,13 @@ export default function MyCalendar({ user }) {
         if (!response.ok) throw new Error('Failed to fetch events');
         const data = await response.json();
         setEvents(data);
+
         const emails = Array.from(new Set(data.map(event => event.email)));
         setStudentEmails(emails);
 
         const uniqueEventNames = [...new Set(data.map(event => event.title))];
         setPsoEventNames(uniqueEventNames);
 
-        // Extract unique event types
         const eventTypes = [...new Set(data.map(event => event.extendedProps?.eventType))];
         setUniqueEventTypes(eventTypes.filter(type => type)); // Filter out any undefined types
       } catch (error) {
@@ -85,8 +86,9 @@ export default function MyCalendar({ user }) {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.endTime) {
       alert('Please select an end time.');
       return;
@@ -101,55 +103,61 @@ export default function MyCalendar({ user }) {
       tutorName: formData.tutorEmail,
       notifyTime: formData.notifyTime,
       optInNotifications: formData.optInNotifications,
+      eventType: formData.eventType, // Ensure eventType is sent
     };
 
-    fetch('http://localhost:5000/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newEvent),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error('Failed to create event');
-        return response.json();
-      })
-      .then((data) => {
-        setEvents(prevEvents => [
-          ...prevEvents,
-          {
-            title: data.title,
-            start: data.start,
-            end: data.end,
-            extendedProps: {
-              email: data.email,
-              tutorName: data.tutorName,
-              notifyTime: data.notifyTime,
-              optInNotifications: data.optInNotifications,
-              eventType: data.eventType, // Ensure eventType is present
-            },
-          },
-        ]);
-        setFormData({
-          title: '',
-          date: formData.date,
-          startTime: '',
-          endTime: '',
-          email: userEmail,
-          tutorEmail: '',
-          notifyTime: '1 hour',
-          optInNotifications: true,
-        });
-      })
-      .catch((error) => {
-        console.error('Error adding event:', error);
-        alert('There was an error booking the appointment. Please try again.');
+    console.log("Submitting new event:", newEvent); // Debugging output
+
+    try {
+      const response = await fetch('http://localhost:5000/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEvent),
       });
+
+      if (!response.ok) throw new Error('Failed to create event');
+      
+      const data = await response.json();
+      console.log("Event created successfully:", data); // Debugging output
+
+      setEvents((prevEvents) => [
+        ...prevEvents,
+        {
+          title: data.title,
+          start: data.start,
+          end: data.end,
+          extendedProps: {
+            email: data.email,
+            tutorName: data.tutorName,
+            notifyTime: data.notifyTime,
+            optInNotifications: data.optInNotifications,
+            eventType: data.eventType, // Ensure eventType is present
+          },
+        },
+      ]);
+
+      setFormData({
+        title: '',
+        date: formData.date,
+        startTime: '',
+        endTime: '',
+        email: userEmail,
+        tutorEmail: '',
+        notifyTime: '1 hour',
+        optInNotifications: true,
+        eventType: '', // Reset eventType field
+      });
+    } catch (error) {
+      console.error('Error adding event:', error);
+      alert('There was an error booking the appointment. Please try again.');
+    }
   };
 
   const filteredEvents = events.filter(event => {
-    const matchesTutor = selectedTutor ? event.extendedProps.tutorName === selectedTutor : true;
+    const matchesTutor = selectedTutor ? event.extendedProps?.tutorName === selectedTutor : true;
     const matchesStudent = studentFilter ? event.email === studentFilter : true;
     const matchesEventName = eventNameFilter ? event.title === eventNameFilter : true;
-    const matchesEventType = eventTypeFilter ? event.extendedProps.eventType === eventTypeFilter : true;
+    const matchesEventType = eventTypeFilter ? event.extendedProps?.eventType === eventTypeFilter : true;
 
     return matchesTutor && matchesStudent && matchesEventName && matchesEventType;
   });
