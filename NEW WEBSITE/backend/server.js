@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth'); // Assuming you have your auth rout
 const User = require('./models/User'); // Import the User model
 const Event = require('./models/Event'); // Import the Event model
 const Message = require('./models/Message'); //Import Message model
+const postRoutes = require('./routes/postRoutes'); // Import post routes
 const draftsRouter = require('./models/Draft');
 require('dotenv').config(); // Load environment variables from .env file
 
@@ -30,6 +31,7 @@ const transporter = nodemailer.createTransport({
 
 // Use authentication routes
 app.use('/api/auth', authRoutes);  // Ensure your auth routes are set up
+app.use('/api/postRoutes', postRoutes); // Use post routes
 
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../frontend/public'))); //get index page
