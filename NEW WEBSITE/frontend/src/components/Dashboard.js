@@ -9,6 +9,7 @@ import ReportAccount from './ReportAccount';
 import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
 import ContactProf from './ContactProf'
+import DiscussionBoard from './DiscussionBoard'; 
 
 
 function Dashboard() {
@@ -70,6 +71,8 @@ function Dashboard() {
         return <PayLedger />;
       case 'contactProf':
         return <ContactProf />
+      case 'discussionBoard':
+        return <DiscussionBoard />; // Render the DiscussionBoard component
   
       case 'dashboard':
       default:
@@ -101,6 +104,7 @@ function Dashboard() {
         <button onClick={() => setCurrentPage('messages')}>Messaging</button>{' '}
         <button onClick={() => setCurrentPage('rateTutor')}>Rate Tutor</button>{' '}
         <button onClick={() => setCurrentPage('contactProf')}>Contact Professors</button>{' '}
+        <button onClick={() => setCurrentPage('discussionBoard')}>Discussion Board</button>{' '}
         {/* Show the Confirm Payment button only if the user is a tutor */}
         {user.isTutor && (
           <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>
