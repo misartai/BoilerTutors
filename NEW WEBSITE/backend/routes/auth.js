@@ -487,27 +487,31 @@ router.get('/:userEmail', async (req, res) => {
 
 //send message
 router.post('/send-message', async (req, res) => {
-  const { senderEmail, recipientEmail, content } = req.body;
+    const { senderEmail, recipientEmail, content } = req.body;
 
-  // Fetch user IDs based on emails
-  const sender = await User.findOne({ email: senderEmail });
-  const receiver = await User.findOne({ email: recipientEmail });
+    // Fetch user IDs based on emails
+    const sender = await User.findOne({ email: senderEmail });
+    const receiver = await User.findOne({ email: recipientEmail });
 
-  if (!sender || !receiver) {
-    return res.status(404).send('User not found');
-  }
+    if (!sender || !receiver) {
+      return res.status(404).send('Sender or recipient not found');
+    }
 
-  const newMessage = new Message({
-    senderId: sender._id,
-    receiverId: receiver._id,
-    content,
-    timestamp: new Date(),
-    isAnnouncement: false,
-    isRead: false
-  });
+    // Construct the new message
+    const newMessage = new Message({
+      senderId: sender._id,
+      receiverId: receiver._id,
+      content,
+      timestamp: new Date(),
+      isAnnouncement: false,
+      isRead: false,
+    });
 
   try {
+    // Save the message to MongoDB
     const savedMessage = await newMessage.save();
+    console.log('Message saved:', savedMessage);
+
     res.status(201).json(savedMessage);
   } catch (error) {
     console.error('Error saving message:', error);

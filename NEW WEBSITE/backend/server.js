@@ -359,8 +359,8 @@ app.post('/api/events', async (req, res) => {
 
 //Required schemas
 const messageSchema = new mongoose.Schema({
-  senderEmail: { type: String, required: true },
-  recipientEmail: { type: String, required: true },
+  senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   content: { type: String, required: true },
   isAnnouncement: { type: Boolean, default: false },
   isRead: { type: Boolean, default: false },
@@ -369,54 +369,42 @@ const messageSchema = new mongoose.Schema({
 
 
 const announcementSchema = new mongoose.Schema({
-  senderEmail: { type: String, required: true },
+  senderEmail: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   content: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
 //Send Message or Announcement
-// Send Message or Announcement
 app.post('/api/messages', async (req, res) => {
   const { senderEmail, recipientEmail, content, isAnnouncement = false } = req.body;
 
   try {
-    // Fetch the user from the database
     const sender = await User.findOne({ email: senderEmail });
 
-    // Check if the message is an announcement and the sender is a professor
     if (isAnnouncement && sender.accountType !== 'professor') {
       return res.status(403).json({ error: 'Only professors can send announcements.' });
     }
 
-    // Prepare message object
-    const messageSchema = new mongoose.Schema({
-      senderEmail: { type: String, required: true },
-      recipientEmail: { type: String }, // Optional for announcements
-      content: { type: String, required: true },
-      isAnnouncement: { type: Boolean, default: false },
-      isRead: { type: Boolean, default: false },
-      createdAt: { type: Date, default: Date.now },
-    });
-
-    module.exports = mongoose.model('Message', messageSchema);
-
-
-    // If it's not an announcement, recipientEmail is required
-    if (!isAnnouncement) {
-      if (!recipientEmail) {
-        return res.status(400).json({ error: 'Recipient email is required for regular messages.' });
-      }
-      messageData.recipientEmail = recipientEmail;
-    }
+    // Prepare the message object
+    const messageData = {
+      senderEmail,
+      recipientEmail: isAnnouncement ? null : recipientEmail, // Only set for non-announcements
+      content,
+      isAnnouncement,
+      isRead: false,
+      createdAt: new Date(),
+    };
 
     const newMessage = new Message(messageData);
     const savedMessage = await newMessage.save();
+
     res.status(201).json(savedMessage);
   } catch (error) {
     console.error('Error saving message:', error);
     res.status(500).json({ error: 'Failed to save message' });
   }
 });
+
 
 // Fetch messages for a user
 app.get('/api/messages', async (req, res) => {
