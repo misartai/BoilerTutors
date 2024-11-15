@@ -7,12 +7,20 @@
   z-index: 1000;
 }
 
+.navbar-logo {
+  width: 200px;
+  height: 60px;
+  margin-right: 20px;
+  cursor: pointer;
+  float: center;
+  margin-bottom: 5px;
+}
+
 .nav-container {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 10px; /* Space between buttons */
-  max-width: 1000px; /* Limit the width of the navigation bar */
   float: left;
   bottom-margin: 0px;
 }
@@ -27,7 +35,6 @@
   cursor: pointer;
   transition: background-color 0.3s;
   text-align: center; /* Center text inside buttons */
-  bottom-margin: 0px;
 }
 
 .nav-container button:hover {
@@ -37,6 +44,11 @@
 
 .nav-container button:active {
   transform: scale(0.98);
+}
+
+.nav-container-signOut {
+    float: right;
+    margin-right: 5px;
 }
 
 .content {
