@@ -362,12 +362,12 @@ app.post('/api/events', async (req, res) => {
 
 //Required schemas
 const messageSchema = new mongoose.Schema({
-  senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  receiverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  senderId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  receiverId: { type: mongoose.Schema.Types.ObjectId, required: true },
   content: { type: String, required: true },
-  isAnnouncement: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }, // Define as Date type
   isRead: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
+  isAnnouncement: { type: Boolean, default: false },
 });
 
 const announcementSchema = new mongoose.Schema({
@@ -377,46 +377,31 @@ const announcementSchema = new mongoose.Schema({
 });
 
 //Send Message or Announcement
-
 app.post('/api/messages', async (req, res) => {
-  const { senderEmail, recipientEmail, content, isAnnouncement = false } = req.body;
-
   try {
+    const { senderEmail, receiverEmail, content } = req.body;
+
     const sender = await User.findOne({ email: senderEmail });
+    const receiver = await User.findOne({ email: receiverEmail });
 
-    if (!sender) {
-      return res.status(404).json({ error: 'Sender not found' });
+    if (!sender || !receiver) {
+      return res.status(400).json({ error: 'Invalid sender or receiver email' });
     }
 
-    //defensive clause, isAnnoucement SHOULD NOT be true here unless not changed elsewhere
-    if (isAnnouncement && sender.accountType !== 'professor') {
-      return res.status(403).json({ error: 'Only professors can send announcements.' });
-    }
-
-    // Prepare the message object
-    const messageData = {
-      senderEmail,
-      recipientEmail: isAnnouncement ? null : recipientEmail, // Only set for non-announcements
+    const newMessage = new Message({
+      senderId: sender._id,
+      receiverId: receiver._id,
       content,
-      isAnnouncement,
-      isRead: false,
-      createdAt: new Date(),
-    };
+      createdAt: new Date().toISOString(),
+    });
 
-    const newMessage = new Message(messageData);
-    const savedMessage = await newMessage.save();
-
-    if (optInNotifications) {
-        await sendNotificationEmail(recipientEmail, content, senderEmail);
-    }
-
-    res.status(201).json(savedMessage);
+    await newMessage.save();
+    res.status(201).json({ message: 'Message sent successfully' });
   } catch (error) {
-    console.error('Error saving message:', error);
-    res.status(500).json({ error: 'Failed to save message' });
+    console.error('Message send error:', error);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
-
 
 // Fetch messages for a user
 app.get('/api/messages', async (req, res) => {

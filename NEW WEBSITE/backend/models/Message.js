@@ -6,7 +6,7 @@ const messageSchema = new mongoose.Schema({
   content: { type: String, required: true },
   isAnnouncement: { type: Boolean, default: false },
   isRead: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { type: String, default: Date.now() },
 });
 
 const Message = mongoose.model('Message', messageSchema);
