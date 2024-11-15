@@ -1,0 +1,45 @@
+.navbar {
+  width: 100%;
+  background-color: #C4BB9B;
+  padding: 10px 0;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* Space between buttons */
+  max-width: 1000px; /* Limit the width of the navigation bar */
+  float: left;
+  bottom-margin: 0px;
+}
+
+.nav-container button {
+  width: 150px; /* Set a fixed width for all buttons */
+  height: 50px; /* Set a fixed height for all buttons */
+  padding: 0; /* Remove padding since height is fixed */
+  background-color: #C4BB9B;
+  color: black;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-align: center; /* Center text inside buttons */
+  bottom-margin: 0px;
+}
+
+.nav-container button:hover {
+  background-color: #767868;
+  color: #ffffff;
+}
+
+.nav-container button:active {
+  transform: scale(0.98);
+}
+
+.content {
+  padding-top: 60px; /* Prevent content from being hidden behind the navbar */
+  margin: 20px;
+}
