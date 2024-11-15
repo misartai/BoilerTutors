@@ -9,6 +9,7 @@ import ReportAccount from './ReportAccount';
 import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
 import ContactProf from './ContactProf'
+import logo from '../boilerTutorsLogo.png';
 
 import './Dashboard.css';
 
@@ -96,22 +97,25 @@ function Dashboard() {
       <nav className="navbar">
         <div className="nav-container">
           <img
-               src="../boilerTutorslogo.png"
+               src={logo}
                alt="BoilerTutors Logo"
                className="navbar-logo"
                onClick={() => setCurrentPage('dashboard')}
           />
-          <button onClick={() => setCurrentPage('calendar')}>Calendar</button>
-          <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>
-          <button onClick={() => setCurrentPage('messages')}>Messaging</button>
-          <button onClick={() => setCurrentPage('rateTutor')}>Rate Tutor</button>
-          <button onClick={() => setCurrentPage('contactProf')}>Contact Professors</button>
+          <button onClick={() => setCurrentPage('calendar')}>View Calendar</button>
+          <button onClick={() => setCurrentPage('professorCalendar')}>View Professor Calendar</button>
+          <button onClick={() => setCurrentPage('messages')}>View Messages</button>
+          <button onClick={() => setCurrentPage('rateTutor')}>Rate A Tutor</button>
+          <button onClick={() => setCurrentPage('contactProf')}>Contact A Professor</button>
           {user.isTutor && <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>}
-          {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report Account</button>}
-          {user.isTutor && <button onClick={() => setCurrentPage('payLedger')}>Pay Ledger</button>}
-          <button onClick={() => navigate('/settings')}>Profile Settings</button>
-          <button onClick={handleSignOut}>Sign Out</button>
-        </div>
+          {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report An Account</button>}
+          {user.isTutor && <button onClick={() => setCurrentPage('payLedger')}>View Pay Ledger</button>}
+          <button onClick={() => navigate('/settings')}>Change Profile Settings</button>
+          </div>
+
+          <div className="nav-container-signOut">
+              <button onClick={handleSignOut}>Sign Out</button>
+          </div>
       </nav>
 
       {/* Render the content based on current page selection */}
