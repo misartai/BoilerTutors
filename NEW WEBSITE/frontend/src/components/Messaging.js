@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './Messages.css';
 
 export default function Messages({ user }) {
   const { email: userEmail } = user;
@@ -173,123 +174,76 @@ export default function Messages({ user }) {
         : true
   );
 
-  return (
-    <div className="main">
-      <div className="messages-container" style={{ display: 'flex', height: '100vh' }}>
-        {user.accountType === 'professor' && (
-          <form onSubmit={handleSendAnnouncement} style={{ display: 'flex', marginTop: '10px' }}>
-            <input
-              type="text"
-              placeholder="Type an announcement here..."
-              value={announcementContent}
-              onChange={(e) => setAnnouncementContent(e.target.value)}
-              style={{ flexGrow: 1, padding: '10px', borderRadius: '5px 0 0 5px', border: '1px solid #ddd' }}
-            />
-            <button
-              type="submit"
-              style={{
-                padding: '10px',
-                borderRadius: '0 5px 5px 0',
-                border: '1px solid #ddd',
-                background: '#4CAF50',
-                color: '#fff',
-              }}
-            >
-              Send Announcement
-            </button>
-          </form>
-        )}
-
-        <div className="recipients-pane" style={{ width: '25%', borderRight: '1px solid #ddd', padding: '10px' }}>
-          <h3>Contacts</h3>
-          {contacts.map((contact) => (
-            <div
-              key={contact.email}
-              onClick={() => {
-                setSelectedContact(contact.email);  // Set the selected contact email
-                setMessageData({ ...messageData, recipientEmail: contact.email });  // Update recipientEmail in messageData
-              }}
-              style={{
-                padding: '8px',
-                cursor: 'pointer',
-                background: selectedContact === contact.email ? '#f0f0f0' : 'transparent',
-              }}
-            >
-              {contact.name} ({contact.email})
-            </div>
-          ))}
-        </div>
-
-        <div className="message-pane" style={{ width: '50%', padding: '10px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ marginBottom: '10px' }}>
-            <label>View:</label>
-            <select onChange={(e) => setView(e.target.value)} value={view}>
-              <option value="messages">Messages</option>
-              <option value="announcements">Announcements</option>
-            </select>
-          </div>
-
-          <div
-            style={{
-              flexGrow: 1,
-              overflowY: 'scroll',
-              padding: '10px',
-              border: '1px solid #ddd',
-              borderRadius: '5px',
-            }}
-          >
-            {view === 'messages' ? (
-              filteredMessages.length > 0 ? (
-                filteredMessages.map((message, index) => (
-                  <div key={index} className="message-item">
-                    <strong>{message.senderEmail === userEmail ? 'You' : message.senderEmail}:</strong> {message.content}
-                    <div style={{ fontSize: '0.8em', color: '#999' }}>
-                      {new Date(message.timestamp).toLocaleString()}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div>No Messages Found</div>
-              )
-            ) : announcements.length > 0 ? (
-              announcements.map((announcement, index) => (
-                <div key={index} className="announcement-item">
-                  <strong>Announcement:</strong> {announcement.content}
-                  <div style={{ fontSize: '0.8em', color: '#999' }}>
-                    {new Date(announcement.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div>No Announcements Found</div>
-            )}
-          </div>
-
-          {view === 'messages' && (
-            <form onSubmit={handleSendMessage}>
-              <input
-                type="text"
-                placeholder="Type a message here..."
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-              />
-              <button type="submit">Send</button>
-            </form>
-          )}
-
-          {view === 'announcements' && (
-            <form onSubmit={handleSendAnnouncement}>
-              <input
-                type="text"
-                placeholder="Type a message here..."
-                value={announcementContent}
-                onChange={(e) => setAnnouncementContent(e.target.value)}
-              />
-              <button type="submit">Send</button>
-            </form>
-          )}
-      </div>
-    </div>
-  </div>
-);
-}
+ return (
+ <div className="messages-main">
+       {user.accountType === 'professor' && (
+         <form className="announcement-form" onSubmit={handleSendAnnouncement}>
+           <input
+             type="text"
+             placeholder="Type an announcement here..."
+             value={announcementContent}
+             onChange={(e) => setAnnouncementContent(e.target.value)}
+           />
+           <button type="submit">Send Announcement</button>
+         </form>
+       )}
+       <div className="recipients-pane">
+         <h3>Contacts</h3>
+         {contacts.map((contact) => (
+           <div
+             key={contact.email}
+             className={`contact-item ${selectedContact === contact.email ? 'active' : ''}`}
+             onClick={() => setSelectedContact(contact.email)}
+           >
+             {contact.name} ({contact.email})
+           </div>
+         ))}
+       </div>
+       <div className="message-pane">
+         <div className="view-select">
+           <select onChange={(e) => setView(e.target.value)} value={view}>
+             <option value="messages">Messages</option>
+             <option value="announcements">Announcements</option>
+           </select>
+         </div>
+         <div className="message-list">
+           {view === 'messages' ? (
+             messages.length > 0 ? (
+               messages.map((msg, idx) => (
+                 <div key={idx} className="message-item">
+                   <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
+                       <div className="timestamp">
+                          {msg.timestamp}
+                       </div>
+                   </div>
+               ))
+             ) : (
+               <p>No Messages Found</p>
+             )
+           ) : (
+             announcements.length > 0 ? (
+               announcements.map((ann, idx) => (
+                 <div key={idx} className="announcement-item">
+                   <strong>Announcement:</strong> {ann.content}
+                 </div>
+               ))
+             ) : (
+               <p>No Announcements Found</p>
+             )
+           )}
+         </div>
+         {view === 'messages' && (
+           <form className="send-message-form" onSubmit={handleSendMessage}>
+             <input
+               type="text"
+               placeholder="Type a message here..."
+               value={messageContent}
+               onChange={(e) => setMessageContent(e.target.value)}
+             />
+             <button type="submit">Send</button>
+           </form>
+         )}
+       </div>
+     </div>
+   );
+ }

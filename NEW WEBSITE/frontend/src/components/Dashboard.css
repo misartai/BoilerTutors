@@ -55,3 +55,8 @@
   padding-top: 60px; /* Prevent content from being hidden behind the navbar */
   margin: 20px;
 }
+
+button {
+    background-color: #C59432;
+    color: black;
+}

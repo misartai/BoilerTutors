@@ -1,0 +1,110 @@
+.timestamp {
+    fontSize: 10px;
+    color: black;
+}
+
+button {
+    padding: 10px;
+    top-margin: 5px;
+    bottom-margin: 5px;
+    background: #4CAF50;
+    color: #fff;
+    boarder: #fff;
+}
+
+/* Main container */
+.messages-main {
+  display: flex;
+  height: 100vh;
+}
+
+/* Announcement Form */
+.announcement-form {
+  display: flex;
+  padding: 10px;
+  gap: 10px;
+}
+
+.announcement-form input {
+  flex-grow: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.announcement-form button {
+  padding: 10px;
+  border-radius: 5px;
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+/* Recipients pane */
+.recipients-pane {
+  width: 25%;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+.contact-item {
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.contact-item.active {
+  background-color: #f0f0f0;
+}
+
+.message-pane {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.view-select {
+  margin-bottom: 10px;
+}
+
+.message-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Message and Announcement Items */
+.message-item,
+.announcement-item {
+  padding: 5px;
+  margin-bottom: 5px;
+}
+
+/* Send message form */
+.send-message-form {
+  display: flex;
+  padding: 10px;
+  gap: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.send-message-form input {
+  flex-grow: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.send-message-form button {
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
