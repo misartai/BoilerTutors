@@ -7,33 +7,9 @@ export default function Messages({ user }) {
   const [contacts, setContacts] = useState([]);
   const [messageContent, setMessageContent] = useState('');
   const [selectedContact, setSelectedContact] = useState('');
-  const [recipientEmail, setRecipientEmail] = useState('');
   const [announcements, setAnnouncements] = useState([]);
-  const [draft, setDrafts] = useState([]);
   const [view, setView] = useState('messages');
   const [announcementContent, setAnnouncementContent] = useState('');
-
-  const initialMessageData = {
-    recipientEmail: '',
-    content: '',
-    isAnnouncement: false,
-  };
-
-  const [messageData, setMessageData] = useState(initialMessageData);
-
-  useEffect(() => {
-    const handleBeforeExit = (event) => {
-      event.preventDefault();
-      event.returnValue = '';
-
-      if (messageData.content && selectedContact) {
-        handleSaveDraft();
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeExit);
-    return () => window.removeEventListener('beforeunload', handleBeforeExit);
-  }, [messageData, selectedContact]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -77,29 +53,6 @@ export default function Messages({ user }) {
     fetchAnnouncements();
   }, []);
 
-  const handleSaveDraft = () => {
-    if (!messageData.content || !messageData.recipientEmail) {
-      return;
-    }
-
-    const draft = {
-      senderEmail: userEmail,
-      recipientEmail: messageData.recipientEmail,
-      content: messageData.content,
-      timestamp: new Date(),
-    };
-
-    setDrafts((prevDrafts) => [...prevDrafts, draft]);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setMessageData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
@@ -110,7 +63,7 @@ export default function Messages({ user }) {
 
     const newMessage = {
       senderEmail: userEmail,
-      recipientEmail: selectedContact,  // Use selectedContact for recipientEmail
+      recipientEmail: selectedContact,
       content: messageContent,
       timestamp: new Date(),
     };
@@ -125,7 +78,7 @@ export default function Messages({ user }) {
       });
 
       if (response.ok) {
-        setMessageContent('');  // Reset message content field
+        setMessageContent('');
       } else {
         alert("Failed to send message");
       }
@@ -156,94 +109,85 @@ export default function Messages({ user }) {
         body: JSON.stringify(newAnnouncement),
       });
 
-      if (!response.ok) throw new Error('Failed to send announcement');
-      const savedAnnouncement = await response.json();
-      setAnnouncements([...announcements, savedAnnouncement]);
-      setAnnouncementContent('');
+      if (response.ok) {
+        const savedAnnouncement = await response.json();
+        setAnnouncements([...announcements, savedAnnouncement]);
+        setAnnouncementContent('');
+      } else {
+        alert('Failed to send announcement');
+      }
     } catch (error) {
       console.error('Error sending announcement:', error);
-      alert('There was an error sending the announcement.');
     }
   };
 
-  const filteredMessages = messages.filter(
-    (message) =>
-      messageData.recipientEmail
-        ? message.recipientEmail === messageData.recipientEmail ||
-          message.senderEmail === messageData.recipientEmail
-        : true
+  return (
+    <div className="messages-main">
+      {user.accountType === 'professor' && (
+        <form className="announcement-form" onSubmit={handleSendAnnouncement}>
+          <input
+            type="text"
+            placeholder="Type an announcement here..."
+            value={announcementContent}
+            onChange={(e) => setAnnouncementContent(e.target.value)}
+          />
+          <button type="submit">Send Announcement</button>
+        </form>
+      )}
+      <div className="recipients-pane">
+        <h3>Contacts</h3>
+        {contacts.map((contact) => (
+          <div
+            key={contact.email}
+            className={`contact-item ${selectedContact === contact.email ? 'active' : ''}`}
+            onClick={() => setSelectedContact(contact.email)}
+          >
+            {contact.name} ({contact.email})
+          </div>
+        ))}
+      </div>
+      <div className="message-pane">
+        <h3>Change View:</h3>
+        <select onChange={(e) => setView(e.target.value)} value={view}>
+          <option value="messages">Messages</option>
+          <option value="announcements">Announcements</option>
+        </select>
+        <div className="message-list">
+          {view === 'messages' ? (
+            messages.length > 0 ? (
+              messages.map((msg, idx) => (
+                <div key={idx} className="message-item">
+                  <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
+                  <div className="timestamp">{new Date(msg.timestamp).toLocaleString()}</div>
+                </div>
+              ))
+            ) : (
+              <p>No Messages Found</p>
+            )
+          ) : (
+            announcements.length > 0 ? (
+              announcements.map((ann, idx) => (
+                <div key={idx} className="announcement-item">
+                  <strong>Announcement:</strong> {ann.content}
+                </div>
+              ))
+            ) : (
+              <p>No Announcements Found</p>
+            )
+          )}
+        </div>
+        {view === 'messages' && (
+          <form className="send-message-form" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              placeholder="Type a message here..."
+              value={messageContent}
+              onChange={(e) => setMessageContent(e.target.value)}
+            />
+            <button type="submit">Send</button>
+          </form>
+        )}
+      </div>
+    </div>
   );
-
- return (
- <div className="messages-main">
-       {user.accountType === 'professor' && (
-         <form className="announcement-form" onSubmit={handleSendAnnouncement}>
-           <input
-             type="text"
-             placeholder="Type an announcement here..."
-             value={announcementContent}
-             onChange={(e) => setAnnouncementContent(e.target.value)}
-           />
-           <button type="submit">Send Announcement</button>
-         </form>
-       )}
-       <div className="recipients-pane">
-         <h3>Contacts</h3>
-         {contacts.map((contact) => (
-           <div
-             key={contact.email}
-             className={`contact-item ${selectedContact === contact.email ? 'active' : ''}`}
-             onClick={() => setSelectedContact(contact.email)}
-           >
-             {contact.name} ({contact.email})
-           </div>
-         ))}
-       </div>
-       <div className="message-pane">
-         <div className="view-select">
-           <select onChange={(e) => setView(e.target.value)} value={view}>
-             <option value="messages">Messages</option>
-             <option value="announcements">Announcements</option>
-           </select>
-         </div>
-         <div className="message-list">
-           {view === 'messages' ? (
-             messages.length > 0 ? (
-               messages.map((msg, idx) => (
-                 <div key={idx} className="message-item">
-                   <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
-                       <div className="timestamp">
-                          {msg.timestamp}
-                       </div>
-                   </div>
-               ))
-             ) : (
-               <p>No Messages Found</p>
-             )
-           ) : (
-             announcements.length > 0 ? (
-               announcements.map((ann, idx) => (
-                 <div key={idx} className="announcement-item">
-                   <strong>Announcement:</strong> {ann.content}
-                 </div>
-               ))
-             ) : (
-               <p>No Announcements Found</p>
-             )
-           )}
-         </div>
-         {view === 'messages' && (
-           <form className="send-message-form" onSubmit={handleSendMessage}>
-             <input
-               type="text"
-               placeholder="Type a message here..."
-               value={messageContent}
-               onChange={(e) => setMessageContent(e.target.value)}
-             />
-             <button type="submit">Send</button>
-           </form>
-         )}
-       </div>
-     </div>
-   );
- }
+}
