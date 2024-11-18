@@ -19,6 +19,22 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard'); // State to manage current page
   const navigate = useNavigate();
+  let inactivityTimeout;
+
+  // Reset the inactivity timer
+  const resetInactivityTimer = () => {
+    clearTimeout(inactivityTimeout);
+    startInactivityTimer();
+  };
+
+  // Start the inactivity timer
+  const startInactivityTimer = () => {
+    inactivityTimeout = setTimeout(() => {
+      if (window.confirm("Press OK to show activity")) {
+        resetInactivityTimer(); // Reset the timer if user interacts
+      }
+    }, 3 * 60 * 60 * 1000); // 3 hours
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -43,6 +59,15 @@ function Dashboard() {
     };
 
     fetchUserData();
+    startInactivityTimer();
+    window.addEventListener('mousemove', resetInactivityTimer);
+    window.addEventListener('keydown', resetInactivityTimer);
+
+    return () => {
+      clearTimeout(inactivityTimeout); // Clear timeout on unmount
+      window.removeEventListener('mousemove', resetInactivityTimer);
+      window.removeEventListener('keydown', resetInactivityTimer);
+    };
   }, []);
 
   if (loading) {
