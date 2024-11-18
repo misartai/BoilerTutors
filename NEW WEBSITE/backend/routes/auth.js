@@ -474,7 +474,7 @@ router.post('/save-draft', async (req, res) => {
   }
 });
 
-// Route to get drafts (optional, if you want to retrieve drafts later)
+// Route to get drafts
 router.get('/:userEmail', async (req, res) => {
   try {
     const drafts = await Draft.find({ senderEmail: req.params.userEmail });

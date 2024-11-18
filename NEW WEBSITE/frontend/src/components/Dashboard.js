@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import MyCalendar from './CalendarDays'; // Import your CalendarDays component
+import MyCalendar from './CalendarDays';
 import ProfessorCalendar from './ProfessorCalendar';
 import Messaging from './Messaging';
-import RateTutor from './RateTutor'; // Import your RateTutor component
+import RateTutor from './RateTutor';
 import ReportAccount from './ReportAccount';
 import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
-
+import './Dashboard.css'; // Add custom CSS for styling
 
 function Dashboard() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState('dashboard'); // State to manage current page
+  const [currentPage, setCurrentPage] = useState('home');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,15 +50,14 @@ function Dashboard() {
     return <div>{error}</div>;
   }
 
-  // Function to render the appropriate component based on the current page
   const renderContent = () => {
     switch (currentPage) {
       case 'professorCalendar':
         return user && <ProfessorCalendar user={user} />;
       case 'calendar':
-        return user && <MyCalendar user={user} />; // Pass the user object to MyCalendar
+        return user && <MyCalendar user={user} />;
       case 'messages':
-        return user && <Messaging user={user} />; //redirect user to Messages
+        return user && <Messaging user={user} />;
       case 'rateTutor':
         return <RateTutor />;
       case 'confirmPayment':
@@ -67,54 +66,77 @@ function Dashboard() {
         return <ReportAccount />;
       case 'payLedger':
         return <PayLedger />;
-  
-      case 'dashboard':
+      case 'home':
       default:
         return (
-          <div>
-            <h1>Welcome, {user.name}</h1>
-            <p>Email: {user.email}</p>
+          <div className="home-page">
+            <section className="description">
+              <h1>Welcome to BoilerTutors</h1>
+              <p>
+                Access all your academic resources in one place. BoilerTutors combines tutoring services, syllabi, and other essential tools to help you succeed in your coursework.
+              </p>
+            </section>
+            <section className="key-features">
+              <h2>Key Features</h2>
+              <div className="features-grid">
+                <div className="feature-card" onClick={() => setCurrentPage('calendar')}>
+                  <h3>Calendar</h3>
+                  <p>Plan your schedule and book tutoring sessions effortlessly.</p>
+                </div>
+                <div className="feature-card" onClick={() => setCurrentPage('messages')}>
+                  <h3>Messaging</h3>
+                  <p>Stay connected with your tutors and peers through instant messaging.</p>
+                </div>
+                <div className="feature-card" onClick={() => setCurrentPage('rateTutor')}>
+                  <h3>Rate Tutors</h3>
+                  <p>Share feedback and reviews for tutors to improve services.</p>
+                </div>
+                {user.isTutor && (
+                  <>
+                    <div className="feature-card" onClick={() => setCurrentPage('confirmPayment')}>
+                      <h3>Confirm Payment</h3>
+                      <p>Manage and confirm payments for completed sessions.</p>
+                    </div>
+                    <div className="feature-card" onClick={() => setCurrentPage('reportAccount')}>
+                      <h3>Report Account</h3>
+                      <p>Report issues with student accounts for quick resolution.</p>
+                    </div>
+                    <div className="feature-card" onClick={() => setCurrentPage('payLedger')}>
+                      <h3>Pay Ledger</h3>
+                      <p>Track and manage all payment transactions efficiently.</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
           </div>
         );
     }
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('token');  // Remove token from localStorage
-    navigate('/');  // Redirect to login page
+    localStorage.removeItem('token');
+    navigate('/');
   };
 
   return (
-    <div>
-      <h1>Welcome to the Dashboard</h1>
-
-      {/* Navigation Links */}
-      <nav>
-        <button onClick={() => setCurrentPage('dashboard')}>Dashboard</button>{' '}
-        <button onClick={() => setCurrentPage('calendar')}>Calendar</button>{' '}
-        <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>{' '}
-        <button onClick={() => navigate('/settings')}>Profile Settings</button>  {/* Profile Settings button */}
-        
-        <button onClick={() => setCurrentPage('messages')}>Messaging</button>{' '}
-        <button onClick={() => setCurrentPage('rateTutor')}>Rate Tutor</button>{' '}
-        {/* Show the Confirm Payment button only if the user is a tutor */}
-        {user.isTutor && (
-          <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>
-        )}
-        {user.isTutor && (
-          <button onClick={() => setCurrentPage('reportAccount')}>Report Account</button>
-        )}
-        {user.isTutor && (
-          <button onClick={() => setCurrentPage('payLedger')}>Pay Ledger</button>
-        )}
-        <button onClick={handleSignOut}>Sign Out</button>
-        {/* Add other navigation buttons here as needed */}
-      </nav>
-
-      {/* Render the content based on current page selection */}
-      <div className="content">
-        {renderContent()}
-      </div>
+    <div className="dashboard">
+      <header className="dashboard-header">
+        <h1>Dashboard</h1>
+        <nav className="navigation">
+          <button onClick={() => setCurrentPage('home')}>Home</button>
+          <button onClick={() => setCurrentPage('calendar')}>Calendar</button>
+          <button onClick={() => setCurrentPage('professorCalendar')}>Professor Calendar</button>
+          <button onClick={() => navigate('/settings')}>Profile Settings</button>
+          <button onClick={() => setCurrentPage('messages')}>Messaging</button>
+          <button onClick={() => setCurrentPage('rateTutor')}>Rate Tutor</button>
+          {user.isTutor && <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>}
+          {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report Account</button>}
+          {user.isTutor && <button onClick={() => setCurrentPage('payLedger')}>Pay Ledger</button>}
+          <button onClick={handleSignOut}>Sign Out</button>
+        </nav>
+      </header>
+      <main className="dashboard-content">{renderContent()}</main>
     </div>
   );
 }
