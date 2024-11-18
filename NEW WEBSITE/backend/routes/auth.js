@@ -202,7 +202,7 @@ router.post('/verify-email', async (req, res) => {
           subject: 'Professor Account Pending Approval',
           text: `A new professor account for ${tempUser.name} (${tempUser.email}) is pending approval. Please verify the account.`
         };
-  
+
         try {
           await transporter.sendMail(mailOptions);
           console.log('Admin notified about pending professor account.');
@@ -257,7 +257,7 @@ router.put('/update-profile', async (req, res) => {
     // Now you can use userId in this route
     const { name, email, password } = req.body;
     const updates = {};
-    
+
     if (name) updates.name = name;
     if (email) updates.email = email;
     if (password) updates.password = await bcrypt.hash(password, 10);
@@ -486,9 +486,11 @@ router.get('/:userEmail', async (req, res) => {
 });
 
 //send message
+//send message
 router.post('/send-message', async (req, res) => {
-    const { senderEmail, recipientEmail, content } = req.body;
+  const { senderEmail, recipientEmail, content } = req.body;
 
+  try {
     // Fetch user IDs based on emails
     const sender = await User.findOne({ email: senderEmail });
     const receiver = await User.findOne({ email: recipientEmail });
@@ -500,14 +502,12 @@ router.post('/send-message', async (req, res) => {
     const newMessage = new Message({
       senderId: sender._id,
       receiverId: receiver._id,
-      content: messageData.content,
-      createdAt: new Date(),
+      content,
+      createdAt: new Date(), // Store timestamp
       isAnnouncement: false,
       isRead: false,
     });
 
-
-  try {
     // Save the message to MongoDB
     const savedMessage = await newMessage.save();
     console.log('Message saved:', savedMessage);
@@ -516,6 +516,35 @@ router.post('/send-message', async (req, res) => {
   } catch (error) {
     console.error('Error saving message:', error);
     res.status(500).json({ message: 'Failed to save message' });
+  }
+});
+
+router.get('/history/:userId', authenticate, async (req, res) => {
+  const { userId: otherUserId } = req.params;
+
+  try {
+    const userId = req.user.userId;
+
+    // Fetch messages between the authenticated user and the other user
+    const messages = await Message.find({
+      $or: [
+        { senderId: userId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: userId }
+      ]
+    })
+    .sort({ createdAt: 1 }) // Sort by timestamp
+    .select('senderId receiverId content createdAt isRead');
+
+    // Format timestamp
+    const formattedMessages = messages.map((msg) => ({
+      ...msg._doc,
+      createdAt: msg.createdAt.toLocaleString(), // Formats the timestamp
+    }));
+
+    res.status(200).json(formattedMessages);
+  } catch (err) {
+    console.error('Retrieve history error:', err);
+    res.status(500).send('Failed to retrieve conversation history');
   }
 });
 

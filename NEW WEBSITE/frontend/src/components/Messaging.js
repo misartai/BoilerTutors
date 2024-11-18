@@ -7,6 +7,7 @@ export default function Messages({ user }) {
   const [contacts, setContacts] = useState([]);
   const [messageContent, setMessageContent] = useState('');
   const [selectedContact, setSelectedContact] = useState('');
+  const [filteredMessages, setFilteredMessages] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [view, setView] = useState('messages');
   const [announcementContent, setAnnouncementContent] = useState('');
@@ -65,7 +66,8 @@ export default function Messages({ user }) {
       senderEmail: userEmail,
       recipientEmail: selectedContact,
       content: messageContent,
-      timestamp: new Date(),
+      createdAt: new Date().toISOString(), // Use createdAt instead of timestamp
+      isAnnouncement: false, // Explicitly mark this as a normal message
     };
 
     try {
@@ -78,6 +80,8 @@ export default function Messages({ user }) {
       });
 
       if (response.ok) {
+        const savedMessage = await response.json();
+        setMessages((prevMessages) => [...prevMessages, savedMessage]);
         setMessageContent('');
       } else {
         alert("Failed to send message");
@@ -86,6 +90,7 @@ export default function Messages({ user }) {
       console.error("Error sending message:", error);
     }
   };
+
 
   const handleSendAnnouncement = async (e) => {
     e.preventDefault();
@@ -98,8 +103,8 @@ export default function Messages({ user }) {
     const newAnnouncement = {
       senderEmail: userEmail,
       content: announcementContent,
+      createdAt: new Date().toISOString(), // Use createdAt instead of timestamp
       isAnnouncement: true,
-      timestamp: new Date(),
     };
 
     try {
@@ -111,7 +116,7 @@ export default function Messages({ user }) {
 
       if (response.ok) {
         const savedAnnouncement = await response.json();
-        setAnnouncements([...announcements, savedAnnouncement]);
+        setAnnouncements((prevAnnouncements) => [...prevAnnouncements, savedAnnouncement]);
         setAnnouncementContent('');
       } else {
         alert('Failed to send announcement');
@@ -119,6 +124,20 @@ export default function Messages({ user }) {
     } catch (error) {
       console.error('Error sending announcement:', error);
     }
+  };
+
+  const filterMessages = (contactEmail) => {
+    const filtered = messages.filter(
+      (message) =>
+        (message.senderEmail === userEmail && message.recipientEmail === contactEmail) ||
+        (message.senderEmail === contactEmail && message.recipientEmail === userEmail)
+    );
+    setFilteredMessages(filtered);
+  };
+
+  const handleSelectContact = (contactEmail) => {
+    setSelectedContact(contactEmail);
+    filterMessages(contactEmail);
   };
 
   return (
@@ -140,7 +159,7 @@ export default function Messages({ user }) {
           <div
             key={contact.email}
             className={`contact-item ${selectedContact === contact.email ? 'active' : ''}`}
-            onClick={() => setSelectedContact(contact.email)}
+            onClick={() => handleSelectContact(contact.email)}
           >
             {contact.name} ({contact.email})
           </div>
@@ -148,21 +167,27 @@ export default function Messages({ user }) {
       </div>
       <div className="message-pane">
         <h3>Change View:</h3>
-        <select onChange={(e) => setView(e.target.value)} value={view}>
-          <option value="messages">Messages</option>
-          <option value="announcements">Announcements</option>
-        </select>
+          <center>
+              <select onChange={(e) => setView(e.target.value)} value={view}>
+              <option value="messages">Messages</option>
+              <option value="announcements">Announcements</option>
+              </select>
+          </center>
         <div className="message-list">
           {view === 'messages' ? (
-            messages.length > 0 ? (
-              messages.map((msg, idx) => (
-                <div key={idx} className="message-item">
-                  <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
-                  <div className="timestamp">{new Date(msg.timestamp).toLocaleString()}</div>
-                </div>
-              ))
+            selectedContact ? (
+              filteredMessages.length > 0 ? (
+                filteredMessages.map((msg, idx) => (
+                  <div key={idx} className="message-item">
+                    <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
+                    <div className="timestamp">{new Date(msg.createdAt).toLocaleString()}</div>
+                  </div>
+                ))
+              ) : (
+                <p>No Messages Found</p>
+              )
             ) : (
-              <p>No Messages Found</p>
+              <p>Select a contact to view messages</p>
             )
           ) : (
             announcements.length > 0 ? (
