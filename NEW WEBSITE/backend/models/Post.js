@@ -1,4 +1,3 @@
-// NEW WEBSITE/backend/models/Post.js
 const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema({
@@ -14,6 +13,8 @@ const postSchema = new mongoose.Schema({
     },
   ],
   isFavourite: { type: Boolean, default: false },
+  upvotes: { type: Number, default: 0 }, // New field for upvotes
+  downvotes: { type: Number, default: 0 }, // New field for downvotes
 });
 
 module.exports = mongoose.model('Post', postSchema);

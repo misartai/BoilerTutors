@@ -75,21 +75,5 @@ router.post('/:id/replies', authenticate, async (req, res) => {
   }
 });
 
-// Toggle favourite status of a post
-router.put('/:id/favourite', authenticate, async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post) {
-      return res.status(404).send('Post not found');
-    }
-    post.isFavourite = !post.isFavourite;
-    const updatedPost = await post.save();
-    res.json(updatedPost);
-  } catch (err) {
-    res.status(500).send('Failed to toggle favourite status');
-  }
-});
-
-console.log(authenticate);
-
-module.exports = router;
+// Upvote a post
+router.p
