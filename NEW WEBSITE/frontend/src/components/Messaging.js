@@ -1,90 +1,64 @@
 import React, { useState, useEffect } from 'react';
+import './Messages.css';
 
 export default function Messages({ user }) {
   const { email: userEmail } = user;
   const [messages, setMessages] = useState([]);
   const [contacts, setContacts] = useState([]);
-  const [selectedContact, setSelectedContact] = useState('');
   const [messageContent, setMessageContent] = useState('');
+  const [selectedContact, setSelectedContact] = useState('');
+  const [filteredMessages, setFilteredMessages] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [view, setView] = useState('messages');
+  const [announcementContent, setAnnouncementContent] = useState('');
 
   useEffect(() => {
-      const handleBeforeExit = (event) => {
-        if (messageContent && selectedContact) {
-            handleSaveDraft();
-        }
-      };
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/messages?userEmail=${userEmail}`);
+        if (!response.ok) throw new Error('Failed to fetch messages');
+        const data = await response.json();
+        const sixteenWeeksInMillis = 16 * 7 * 24 * 60 * 60 * 1000;
+        const validMessages = data.filter((message) => (new Date() - new Date(message.createdAt)) <= sixteenWeeksInMillis);
+        setMessages(validMessages);
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
 
-      window.addEventListener('beforeunload', handleBeforeExit);
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/users');
+        if (!response.ok) throw new Error('Failed to fetch contacts');
+        const data = await response.json();
+        setContacts(data.filter((contact) => contact.email !== userEmail));
+      } catch (error) {
+        console.error('Error fetching contacts:', error);
+      }
+    };
 
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeExit);
-      };
-}, [messageContent, selectedContact]);
-
-useEffect(() => {
-      const fetchMessages = async () => {
-          try {
-              const response = await fetch(`http://localhost:5000/api/messages?userEmail=${userEmail}`);
-              if (!response.ok) {
-                  throw new Error('Failed to fetch messages');
-              }
-              const data = await response.json();
-              const currentDate = new Date();
-              const sixteenWeeksInMillis = 16 * 7 * 24 * 60 * 60 * 1000; // 16 weeks in milliseconds
-
-              // Filter messages that are not older than 16 weeks
-              const validMessages = data.filter(message => {
-                  const messageDate = new Date(message.createdAt);
-                  return (currentDate - messageDate) <= sixteenWeeksInMillis;
-              });
-
-              setMessages(validMessages);
-          } catch (error) {
-              console.error('Error fetching messages:', error);
-          }
-      };
-
-      const fetchContacts = async () => {
-          try {
-              const response = await fetch(`http://localhost:5000/api/contacts?userEmail=${userEmail}`);
-              if (!response.ok) {
-                  throw new Error('Failed to fetch contacts');
-              }
-              const data = await response.json();
-              setContacts(data);
-          } catch (error) {
-              console.error('Error fetching contacts:', error);
-          }
-      };
-
-      fetchMessages();
-      fetchContacts();
+    fetchMessages();
+    fetchContacts();
   }, [userEmail]);
 
   useEffect(() => {
-      const fetchAnnouncements = async () => {
-          try {
-              const response = await fetch('http://localhost:5000/api/announcements');
-              if (!response.ok) {
-                  throw new Error('Failed to fetch announcements');
-              }
-              const data = await response.json();
-              setAnnouncements(data);
-          } catch (error) {
-              console.error('Error fetching announcements:', error);
-          }
-      };
-
-      fetchAnnouncements();
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/announcements');
+        if (!response.ok) throw new Error('Failed to fetch announcements');
+        setAnnouncements(await response.json());
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+      }
+    };
+    fetchAnnouncements();
   }, []);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    if (!messageContent) {
-      alert('Please enter a message.');
+    if (!messageContent || !selectedContact) {
+      alert("Please enter a message and select a recipient.");
       return;
     }
 
@@ -92,146 +66,152 @@ useEffect(() => {
       senderEmail: userEmail,
       recipientEmail: selectedContact,
       content: messageContent,
+      createdAt: new Date().toISOString(), // Use createdAt instead of timestamp
+      isAnnouncement: false, // Explicitly mark this as a normal message
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newMessage),
+      });
+
+      if (response.ok) {
+        const savedMessage = await response.json();
+        setMessages((prevMessages) => [...prevMessages, savedMessage]);
+        setMessageContent('');
+      } else {
+        alert("Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+
+  const handleSendAnnouncement = async (e) => {
+    e.preventDefault();
+
+    if (!announcementContent) {
+      alert('Please enter an announcement.');
+      return;
+    }
+
+    const newAnnouncement = {
+      senderEmail: userEmail,
+      content: announcementContent,
+      createdAt: new Date().toISOString(), // Use createdAt instead of timestamp
+      isAnnouncement: true,
     };
 
     try {
       const response = await fetch('http://localhost:5000/api/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newMessage),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newAnnouncement),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
+      if (response.ok) {
+        const savedAnnouncement = await response.json();
+        setAnnouncements((prevAnnouncements) => [...prevAnnouncements, savedAnnouncement]);
+        setAnnouncementContent('');
+      } else {
+        alert('Failed to send announcement');
       }
-
-      const savedMessage = await response.json();
-      setMessages([...messages, savedMessage]);
-      setMessageContent('');
     } catch (error) {
-      console.error('Error sending message:', error);
-      alert('There was an error sending the message. Please try again.');
+      console.error('Error sending announcement:', error);
     }
   };
 
-  const filteredMessages = messages.filter(message => {
-    return selectedContact ? message.recipientEmail === selectedContact || message.senderEmail === selectedContact : true;
-  });
-
-const handleSaveDraft = async () => {
-  if (!messageContent || !selectedContact) {
-    alert('Please enter a message and select a recipient.');
-    return;
-  }
-
-  const draft = {
-    senderEmail: userEmail,
-    recipientEmail: selectedContact,
-    content: messageContent,
+  const filterMessages = (contactEmail) => {
+    const filtered = messages.filter(
+      (message) =>
+        (message.senderEmail === userEmail && message.recipientEmail === contactEmail) ||
+        (message.senderEmail === contactEmail && message.recipientEmail === userEmail)
+    );
+    setFilteredMessages(filtered);
   };
 
-  try {
-    const response = await fetch('http://localhost:5000/api/drafts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(draft),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to save draft');
-    }
-
-    const savedDraft = await response.json();
-    console.log('Draft saved successfully:', savedDraft);
-    alert('Draft saved successfully!');
-  } catch (error) {
-    console.error('Error saving draft:', error);
-    alert('There was an error saving the draft. Please try again.');
-  }
-};
+  const handleSelectContact = (contactEmail) => {
+    setSelectedContact(contactEmail);
+    filterMessages(contactEmail);
+  };
 
   return (
-    <div className="main">
-      <div className="messages-container">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-          <div style={{ marginBottom: '10px', width: '100%' }}>
-            <label style={{ marginRight: '5px' }}>View:</label>
-            <select onChange={(e) => setView(e.target.value)} value={view}>
+    <div className="messages-main">
+      {user.accountType === 'professor' && (
+        <form className="announcement-form" onSubmit={handleSendAnnouncement}>
+          <input
+            type="text"
+            placeholder="Type an announcement here..."
+            value={announcementContent}
+            onChange={(e) => setAnnouncementContent(e.target.value)}
+          />
+          <button type="submit">Send Announcement</button>
+        </form>
+      )}
+      <div className="recipients-pane">
+        <h3>Contacts</h3>
+        {contacts.map((contact) => (
+          <div
+            key={contact.email}
+            className={`contact-item ${selectedContact === contact.email ? 'active' : ''}`}
+            onClick={() => handleSelectContact(contact.email)}
+          >
+            {contact.name} ({contact.email})
+          </div>
+        ))}
+      </div>
+      <div className="message-pane">
+        <h3>Change View:</h3>
+          <center>
+              <select onChange={(e) => setView(e.target.value)} value={view}>
               <option value="messages">Messages</option>
               <option value="announcements">Announcements</option>
-            </select>
-          </div>
-
-          {view === 'messages' && (
-            <>
-              <div style={{ marginBottom: '10px', width: '100%' }}>
-                <label style={{ marginRight: '5px' }}>Filter by Contact:</label>
-                <select onChange={(e) => setSelectedContact(e.target.value)} value={selectedContact}>
-                  <option value="">All Contacts</option>
-                  {contacts.map(contact => (
-                    <option key={contact.email} value={contact.email}>
-                      {contact.name} ({contact.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="messages-list" style={{ width: '100%', maxHeight: '400px', overflowY: 'scroll' }}>
-                {filteredMessages.map((message, index) => (
-                  <div key={index} className="message-item">
-                    <strong>{message.senderEmail === userEmail ? 'You' : message.senderEmail}:</strong> {message.content}
+              </select>
+          </center>
+        <div className="message-list">
+          {view === 'messages' ? (
+            selectedContact ? (
+              filteredMessages.length > 0 ? (
+                filteredMessages.map((msg, idx) => (
+                  <div key={idx} className="message-item">
+                    <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
+                    <div className="timestamp">{new Date(msg.createdAt).toLocaleString()}</div>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {view === 'announcements' && (
-            <div className="announcements-list" style={{ width: '100%', maxHeight: '400px', overflowY: 'scroll' }}>
-              {announcements.map((announcement, index) => (
-                <div key={index} className="announcement-item">
-                  <strong>Announcement:</strong> {announcement.content}
+                ))
+              ) : (
+                <p>No Messages Found</p>
+              )
+            ) : (
+              <p>Select a contact to view messages</p>
+            )
+          ) : (
+            announcements.length > 0 ? (
+              announcements.map((ann, idx) => (
+                <div key={idx} className="announcement-item">
+                  <strong>Announcement:</strong> {ann.content}
                 </div>
-              ))}
-            </div>
-          )}
-
-          {view === 'messages' && (
-            <div className="message-form" style={{ width: '100%', marginTop: '10px' }}>
-              <form onSubmit={handleSendMessage}>
-                <div>
-                  <label>Message:</label>
-                  <input
-                    type="text"
-                    value={messageContent}
-                    onChange={(e) => setMessageContent(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label>Recipient:</label>
-                  <select
-                    value={selectedContact}
-                    onChange={(e) => setSelectedContact(e.target.value)}
-                    required
-                  >
-                    <option value="">Select Contact</option>
-                    {contacts.map(contact => (
-                      <option key={contact.email} value={contact.email}>
-                        {contact.name} ({contact.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button type="submit">Send Message</button>
-              </form>
-            </div>
+              ))
+            ) : (
+              <p>No Announcements Found</p>
+            )
           )}
         </div>
+        {view === 'messages' && (
+          <form className="send-message-form" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              placeholder="Type a message here..."
+              value={messageContent}
+              onChange={(e) => setMessageContent(e.target.value)}
+            />
+            <button type="submit">Send</button>
+          </form>
+        )}
       </div>
     </div>
   );
