@@ -9,6 +9,7 @@ import ReportAccount from './ReportAccount';
 import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
 import './Dashboard.css';
+import { FaCalendarAlt, FaCommentDots, FaStar, FaWallet, FaFileInvoice, FaExclamationTriangle } from 'react-icons/fa';  // FontAwesome icons
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -80,28 +81,34 @@ function Dashboard() {
               <h2>Key Features</h2>
               <div className="features-grid">
                 <div className="feature-card" onClick={() => setCurrentPage('calendar')}>
+                  <FaCalendarAlt size={40} />
                   <h3>Calendar</h3>
                   <p>Plan your schedule and book tutoring sessions effortlessly.</p>
                 </div>
                 <div className="feature-card" onClick={() => setCurrentPage('messages')}>
+                  <FaCommentDots size={40} />
                   <h3>Messaging</h3>
                   <p>Stay connected with your tutors and peers through instant messaging.</p>
                 </div>
                 <div className="feature-card" onClick={() => setCurrentPage('rateTutor')}>
+                  <FaStar size={40} />
                   <h3>Rate Tutors</h3>
                   <p>Share feedback and reviews for tutors to improve services.</p>
                 </div>
                 {user.isTutor && (
                   <>
                     <div className="feature-card" onClick={() => setCurrentPage('confirmPayment')}>
+                      <FaWallet size={40} />
                       <h3>Confirm Payment</h3>
                       <p>Manage and confirm payments for completed sessions.</p>
                     </div>
                     <div className="feature-card" onClick={() => setCurrentPage('reportAccount')}>
+                      <FaExclamationTriangle size={40} />
                       <h3>Report Account</h3>
                       <p>Report issues with student accounts for quick resolution.</p>
                     </div>
                     <div className="feature-card" onClick={() => setCurrentPage('payLedger')}>
+                      <FaFileInvoice size={40} />
                       <h3>Pay Ledger</h3>
                       <p>Track and manage all payment transactions efficiently.</p>
                     </div>
