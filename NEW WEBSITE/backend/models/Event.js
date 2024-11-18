@@ -5,12 +5,13 @@ const eventSchema = new mongoose.Schema({
   start: { type: Date, required: true },
   end: { type: Date, required: true },
   email: { type: String, required: true },
-  staffEmail: { type: String, required: true },
-  notifyTime: { type: String },
-  optInNotifications: { type: Boolean },
-  eventType: { type: String, required: true }, // Ensure this line is included
+  tutorName: { type: String, required: true },
+  notifyTime: { type: String, default: '1 hour' },
+  optInNotifications: { type: Boolean, default: false },
+  eventType: { type: String, enum: ['PSO', 'Office Hours', 'Appointment'], default: 'Appointment' }, 
 });
 
 const Event = mongoose.model('Event', eventSchema);
+
 
 module.exports = Event;

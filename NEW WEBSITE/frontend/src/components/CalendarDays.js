@@ -56,7 +56,7 @@ export default function MyCalendar({ user }) {
         const uniqueEventNames = [...new Set(data.map(event => event.title))];
         setPsoEventNames(uniqueEventNames);
 
-        const eventTypes = [...new Set(data.map(event => event.extendedProps?.eventType))];
+        const eventTypes = [...new Set(data.map(event => event.eventType))];
         setUniqueEventTypes(eventTypes.filter(type => type)); // Filter out any undefined types
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -99,14 +99,11 @@ export default function MyCalendar({ user }) {
       start: `${formData.date}T${formData.startTime}`,
       end: `${formData.date}T${formData.endTime}`,
       email: formData.email,
-      userEmail: formData.email,
       tutorName: formData.tutorEmail,
       notifyTime: formData.notifyTime,
       optInNotifications: formData.optInNotifications,
       eventType: formData.eventType, // Ensure eventType is sent
     };
-
-    console.log("Submitting new event:", newEvent); // Debugging output
 
     try {
       const response = await fetch('http://localhost:5000/api/events', {
@@ -116,10 +113,8 @@ export default function MyCalendar({ user }) {
       });
 
       if (!response.ok) throw new Error('Failed to create event');
-      
-      const data = await response.json();
-      console.log("Event created successfully:", data); // Debugging output
 
+      const data = await response.json();
       setEvents((prevEvents) => [
         ...prevEvents,
         {
@@ -157,7 +152,7 @@ export default function MyCalendar({ user }) {
     const matchesTutor = selectedTutor ? event.extendedProps?.tutorName === selectedTutor : true;
     const matchesStudent = studentFilter ? event.email === studentFilter : true;
     const matchesEventName = eventNameFilter ? event.title === eventNameFilter : true;
-    const matchesEventType = eventTypeFilter ? event.extendedProps?.eventType === eventTypeFilter : true;
+    const matchesEventType = eventTypeFilter ? event.eventType === eventTypeFilter : true;
 
     return matchesTutor && matchesStudent && matchesEventName && matchesEventType;
   });
@@ -314,6 +309,15 @@ export default function MyCalendar({ user }) {
                     checked={formData.optInNotifications}
                     onChange={handleInputChange}
                   />
+                </div>
+                <div>
+                  <label>Event Type:</label>
+                  <select name="eventType" value={formData.eventType} onChange={handleInputChange} required>
+                    <option value="">Select Event Type</option>
+                    <option value="PSO">PSO</option>
+                    <option value="Office Hours">Office Hours</option>
+                    <option value="General">General</option>
+                  </select>
                 </div>
                 <button type="submit">Book Event</button>
               </form>
