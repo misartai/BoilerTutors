@@ -8,7 +8,7 @@ import RateTutor from './RateTutor';
 import ReportAccount from './ReportAccount';
 import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
-import './Dashboard.css'; // Add custom CSS for styling
+import './Dashboard.css';
 
 function Dashboard() {
   const [user, setUser] = useState(null);
@@ -53,11 +53,11 @@ function Dashboard() {
   const renderContent = () => {
     switch (currentPage) {
       case 'professorCalendar':
-        return user && <ProfessorCalendar user={user} />;
+        return <ProfessorCalendar user={user} />;
       case 'calendar':
-        return user && <MyCalendar user={user} />;
+        return <MyCalendar user={user} />;
       case 'messages':
-        return user && <Messaging user={user} />;
+        return <Messaging user={user} />;
       case 'rateTutor':
         return <RateTutor />;
       case 'confirmPayment':
@@ -121,8 +121,9 @@ function Dashboard() {
 
   return (
     <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>Dashboard</h1>
+      {/* Top Navigation Bar */}
+      <header className="top-nav">
+        <div className="logo">BoilerTutors</div>
         <nav className="navigation">
           <button onClick={() => setCurrentPage('home')}>Home</button>
           <button onClick={() => setCurrentPage('calendar')}>Calendar</button>
@@ -136,6 +137,8 @@ function Dashboard() {
           <button onClick={handleSignOut}>Sign Out</button>
         </nav>
       </header>
+
+      {/* Render content based on currentPage */}
       <main className="dashboard-content">{renderContent()}</main>
     </div>
   );
