@@ -8,7 +8,7 @@ const eventSchema = new mongoose.Schema({
   tutorName: { type: String, required: true },
   notifyTime: { type: String, default: '1 hour' },
   optInNotifications: { type: Boolean, default: false },
-  eventType: { type: String, enum: ['PSO', 'Office Hours', 'Appointment'], default: 'Appointment' }, 
+  eventType: { type: String, enum: ['pso', 'office hours', 'appointment'], default: 'appointment' }, 
 });
 
 const Event = mongoose.model('Event', eventSchema);
