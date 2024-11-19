@@ -17,7 +17,7 @@ export default function MyCalendar({ user }) {
     tutorEmail: '',
     notifyTime: '1 hour',
     optInNotifications: true,
-    eventType: '', // Added eventType to form data
+    eventType: '',
   });
   const [tutors, setTutors] = useState([]);
   const [selectedTutor, setSelectedTutor] = useState('');
@@ -27,7 +27,7 @@ export default function MyCalendar({ user }) {
   const [eventTypeFilter, setEventTypeFilter] = useState('');
   const [studentEmails, setStudentEmails] = useState([]);
   const [psoEventNames, setPsoEventNames] = useState([]);
-  const [uniqueEventTypes, setUniqueEventTypes] = useState([]); // State for unique event types
+  const [uniqueEventTypes, setUniqueEventTypes] = useState([]);
 
   const generateTimeIntervals = (start, end) => {
     const intervals = [];
@@ -48,7 +48,12 @@ export default function MyCalendar({ user }) {
         const response = await fetch(`http://localhost:5000/api/events`);
         if (!response.ok) throw new Error('Failed to fetch events');
         const data = await response.json();
-        setEvents(data);
+        setEvents(
+          data.map(event => ({
+            ...event,
+            extendedProps: { tutorName: event.tutorName, eventType: event.eventType },
+          }))
+        );
 
         const emails = Array.from(new Set(data.map(event => event.email)));
         setStudentEmails(emails);
@@ -57,7 +62,7 @@ export default function MyCalendar({ user }) {
         setPsoEventNames(uniqueEventNames);
 
         const eventTypes = [...new Set(data.map(event => event.eventType))];
-        setUniqueEventTypes(eventTypes.filter(type => type)); // Filter out any undefined types
+        setUniqueEventTypes(eventTypes.filter(type => type));
       } catch (error) {
         console.error('Error fetching events:', error);
       }
@@ -102,7 +107,7 @@ export default function MyCalendar({ user }) {
       tutorName: formData.tutorEmail,
       notifyTime: formData.notifyTime,
       optInNotifications: formData.optInNotifications,
-      eventType: formData.eventType, // Ensure eventType is sent
+      eventType: formData.eventType,
     };
 
     try {
@@ -126,7 +131,7 @@ export default function MyCalendar({ user }) {
             tutorName: data.tutorName,
             notifyTime: data.notifyTime,
             optInNotifications: data.optInNotifications,
-            eventType: data.eventType, // Ensure eventType is present
+            eventType: data.eventType,
           },
         },
       ]);
@@ -140,7 +145,7 @@ export default function MyCalendar({ user }) {
         tutorEmail: '',
         notifyTime: '1 hour',
         optInNotifications: true,
-        eventType: '', // Reset eventType field
+        eventType: '',
       });
     } catch (error) {
       console.error('Error adding event:', error);
@@ -148,11 +153,19 @@ export default function MyCalendar({ user }) {
     }
   };
 
-  const filteredEvents = events.filter(event => {
-    const matchesTutor = selectedTutor ? event.extendedProps?.tutorName === selectedTutor : true;
-    const matchesStudent = studentFilter ? event.email === studentFilter : true;
-    const matchesEventName = eventNameFilter ? event.title === eventNameFilter : true;
-    const matchesEventType = eventTypeFilter ? event.eventType === eventTypeFilter : true;
+  const filteredEvents = events.filter((event) => {
+    const matchesTutor = selectedTutor
+      ? event.extendedProps?.tutorName === selectedTutor
+      : true;
+    const matchesStudent = studentFilter
+      ? event.email === studentFilter
+      : true;
+    const matchesEventName = eventNameFilter
+      ? event.title === eventNameFilter
+      : true;
+    const matchesEventType = eventTypeFilter
+      ? event.eventType === eventTypeFilter
+      : true;
 
     return matchesTutor && matchesStudent && matchesEventName && matchesEventType;
   });
@@ -243,7 +256,7 @@ export default function MyCalendar({ user }) {
               headerToolbar={{
                 left: 'today prev,next',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                right: '', // Removed filters
               }}
             />
           </div>

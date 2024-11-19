@@ -21,13 +21,13 @@ mongoose.connect('mongodb+srv://aryanshahu13:VyQrFxeiIhkLIWFI@boilertutors.jk0hb
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('Failed to connect to MongoDB:', err));
 
-// Nodemailer transporter setup
+// Setup Nodemailer transporter (adjust with your email provider settings)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: 'gmail',  // You can use other services (e.g., Outlook, Yahoo)
   auth: {
-    user: process.env.EMAIL, // Use environment variable for email
-    pass: process.env.EMAIL_PASSWORD, // Use environment variable for App Password
-  },
+    user: 'boilertutors420',
+    pass: 'zins bweo neuh zzgz'
+  }
 });
 
 // Use authentication routes
