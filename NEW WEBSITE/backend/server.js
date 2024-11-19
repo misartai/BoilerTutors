@@ -9,7 +9,7 @@ const Event = require('./models/Event'); // Import the Event model
 const Message = require('./models/Message'); //Import Message model
 const draftsRouter = require('./models/Draft');
 require('dotenv').config(); // Load environment variables from .env file
-
+const router = express.Router();
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
@@ -26,6 +26,15 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL, // Use environment variable for email
     pass: process.env.EMAIL_PASSWORD, // Use environment variable for App Password
   },
+});
+
+// Setup Nodemailer transporter (adjust with your email provider settings)
+const transporter1 = nodemailer.createTransport({
+  service: 'gmail',  // You can use other services (e.g., Outlook, Yahoo)
+  auth: {
+    user: 'boilertutors420',
+    pass: 'zins bweo neuh zzgz'
+  }
 });
 
 // Use authentication routes
@@ -158,7 +167,7 @@ app.post('/send-email', async (req, res) => {
 });
 
 
-app.post('/students/:studentName/payments', async (req, res) => {
+/*app.post('/students/:studentName/payments', async (req, res) => {
   try {
       const { status, reason } = req.body;
       const studentName = req.params.studentName;
@@ -181,7 +190,122 @@ app.post('/students/:studentName/payments', async (req, res) => {
       console.error('Error updating payment status:', error);
       res.status(500).send('Error updating payment status');
   }
+});*/
+app.post('/students/:studentName/payments', async (req, res) => {
+  try {
+    const { status, reason } = req.body;
+    const studentName = req.params.studentName;
+    const timestamp = new Date().toISOString(); // Ensure we have an ISO formatted timestamp
+
+    // Find the payment record for the student
+    let paymentRecord = await Payment.findOne({ studentName });
+    const student = await User.findOne({ name: studentName });
+    if (!paymentRecord) {
+      // If no payment record exists for the student, create one
+      paymentRecord = new Payment({ studentName, payments: [] });
+    }
+
+    // Existing functionality: Handle confirmed or denied payment (old behavior)
+    if (status === 'Confirmed' || status === 'Denied') {
+      // Prepare new payment entry
+      const newEntry = { status, timestamp, reason };
+      paymentRecord.payments.push(newEntry);
+      await paymentRecord.save();
+
+      // Send email for confirmed or denied payment
+      let emailSubject = '';
+      let emailBody = '';
+      if (status === 'Confirmed') {
+        emailSubject = 'Payment Confirmed';
+        emailBody = `Payment for ${studentName} has been confirmed on ${timestamp}.`;
+      } else if (status === 'Denied') {
+        emailSubject = 'Payment Denied';
+        emailBody = `Payment for ${studentName} was denied on ${timestamp}. Reason: ${reason}`;
+      }
+
+      // Send the email using the transporter
+      const mailOptions = {
+        from: 'boilertutors420@gmail.com', // Sender address
+        to: 'recipient@example.com', 
+        subject: emailSubject,
+        text: emailBody,  // You can also use HTML if needed (e.g., html: '<p>Your email body in HTML</p>')
+      };
+
+      try {
+        await transporter1.sendMail(mailOptions);
+        console.log('Email sent successfully');
+      } catch (error) {
+        console.error('Error sending email:', error);
+      }
+
+      // Return the response to the client
+      return res.json({
+        message: 'Payment status updated',
+        paymentRecord,
+        emailSent: true,
+      });
+    }
+
+    // New functionality: Handle editing from Confirmed to Denied, or Denied to Confirmed
+    if (status === 'EditFromConfirmToDeny' || status === 'EditFromDenyToConfirm') {
+      // Look for the most recent payment entry
+      const lastPayment = paymentRecord.payments[paymentRecord.payments.length - 1];
+      
+      // Update the last payment entry based on status change
+      if (status === 'EditFromConfirmToDeny' && lastPayment.status === 'Confirmed') {
+        lastPayment.status = 'Denied';
+        lastPayment.reason = reason;
+        lastPayment.timestamp = timestamp;
+      } else if (status === 'EditFromDenyToConfirm' && lastPayment.status === 'Denied') {
+        lastPayment.status = 'Confirmed';
+        lastPayment.timestamp = timestamp;
+      }
+
+      // Save the updated payment entry
+      await paymentRecord.save();
+
+      // Send the appropriate email for status change
+      let emailSubject = '';
+      let emailBody = '';
+      if (status === 'EditFromConfirmToDeny') {
+        emailSubject = 'Payment Entry Updated (Confirmed to Denied)';
+        emailBody = `The payment for ${studentName} has been updated from "Confirmed" to "Denied" on ${timestamp}. Reason: ${reason}.`;
+      } else if (status === 'EditFromDenyToConfirm') {
+        emailSubject = 'Payment Entry Updated (Denied to Confirmed)';
+        emailBody = `The payment for ${studentName} has been updated from "Denied" to "Confirmed" on ${timestamp}.`;
+      }
+
+      // Send the email using the transporter
+      const mailOptions = {
+        from: 'boilertutors420@gmail.com', // Sender address
+        to: 'recipient@example.com', // Replace with the recipient's email
+        subject: emailSubject,
+        text: emailBody,  // You can also use HTML if needed (e.g., html: '<p>Your email body in HTML</p>')
+      };
+
+      try {
+        await transporter1.sendMail(mailOptions);
+        console.log('Email sent successfully');
+      } catch (error) {
+        console.error('Error sending email:', error);
+      }
+
+      // Return the response
+      return res.json({
+        message: 'Payment status updated and email sent',
+        paymentRecord,
+        emailSent: true,
+      });
+    }
+
+    // If status is invalid or no status is given, return an error
+    return res.status(400).json({ message: 'Invalid payment status' });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).send('Error updating payment status');
+  }
 });
+
 
 
 // Confirm payment route
@@ -228,10 +352,8 @@ app.get('/reports', async (req, res) => {
     res.status(500).json({ message: 'Error fetching reports', error });
   }
 });
-
-
-
-app.post('/reports', async (req, res) => {
+// app.post without emails
+/*app.post('/reports', async (req, res) => {
   try {
       const { studentName, reason } = req.body;
       const trackingId = Math.floor(10000 + Math.random() * 90000).toString(); // Inline generation
@@ -239,6 +361,7 @@ app.post('/reports', async (req, res) => {
 
       // Check if a report already exists for this student
       let report = await Report.findOne({ studentName });
+      
 
       if (report) {
           // If the report exists, push the new report entry into the reports array
@@ -266,10 +389,7 @@ app.post('/reports', async (req, res) => {
       console.error('Error saving report:', error);
       res.status(400).json({ message: 'Error saving report', error });
   }
-});
-
-
-
+});*/
 
 app.get('/reports/:studentName', async (req, res) => {
   try {
@@ -287,8 +407,70 @@ app.get('/reports/:studentName', async (req, res) => {
   }
 });
 
+// Route to submit a report (with emails)
+app.post('/reports', async (req, res) => {
+  try {
+    const { studentName, reason } = req.body;
+    const trackingId = Math.floor(10000 + Math.random() * 90000).toString(); // Inline tracking ID generation
+    const timestamp = new Date().toISOString();
+    
+    // Check if a report already exists for this student
+    let report = await Report.findOne({ studentName });
+    
+    // Check if the student exists
+    const student = await User.findOne({ name: studentName });
+    if (!student || !student.email) {
+      return res.status(404).send('Student email not found');
+    }
 
-//const Payment = require('./models/Payment'); // Adjust the model path accordingly
+    if (report) {
+      // If the report exists, push the new report entry into the reports array
+      report.reports.push({
+        trackingId,
+        timestamp,
+        reason
+      });
+      await report.save();
+    } else {
+      // If no report exists, create a new report entry
+      report = new Report({
+        studentName,
+        reports: [{
+          trackingId,
+          timestamp,
+          reason
+        }]
+      });
+      await report.save();
+    }
+
+    // Send an email notification to the student
+    const mailOptions = {
+      from: process.env.EMAIL, // Your email
+      to: student.email, // Student's email
+      subject: `Report Raised: ${studentName}`,
+      text: `
+        A new report has been raised against your account:
+        - Reason: ${reason}
+        - Tracking ID: ${trackingId}
+        - Timestamp: ${timestamp}
+      `,
+    };
+
+    console.log('email', student.email);
+    await transporter1.sendMail(mailOptions);
+
+    // Send only one response after everything is done
+    res.status(200).json({
+      message: 'Report submitted successfully and email sent',
+      trackingId
+    });
+  } catch (err) {
+    console.error('Report submission error:', err);
+    res.status(500).send('Failed to submit report');
+  }
+});
+
 
 app.get('/api/payments', async (req, res) => {
   try {
