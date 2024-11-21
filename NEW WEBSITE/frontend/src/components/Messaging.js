@@ -12,6 +12,7 @@ export default function Messages({ user }) {
   const [view, setView] = useState('messages');
   const [announcementContent, setAnnouncementContent] = useState('');
 
+
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -56,40 +57,18 @@ export default function Messages({ user }) {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-
-    if (!messageContent || !selectedContact) {
-      alert("Please enter a message and select a recipient.");
-      return;
-    }
-
-    const newMessage = {
-      senderEmail: userEmail,
-      recipientEmail: selectedContact,
-      content: messageContent,
-      createdAt: new Date().toISOString(), // Use createdAt instead of timestamp
-      isAnnouncement: false, // Explicitly mark this as a normal message
-    };
-
     try {
-      const response = await fetch("http://localhost:5000/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newMessage),
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        body: JSON.stringify({ senderEmail: user.email, receiverEmail: selectedContact, content: messageContent })
       });
-
-      if (response.ok) {
-        const savedMessage = await response.json();
-        setMessages((prevMessages) => [...prevMessages, savedMessage]);
-        setMessageContent('');
-      } else {
-        alert("Failed to send message");
-      }
+      const savedMessage = await response.json();
+      setMessages([...messages, savedMessage]); // Add the new message to the state
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error('Error sending message:', error);
     }
   };
+
 
 
   const handleSendAnnouncement = async (e) => {
@@ -126,19 +105,53 @@ export default function Messages({ user }) {
     }
   };
 
-  const filterMessages = (contactEmail) => {
+
+
+  const handleSelectContact = (contactEmail) => {
+    // Set the selected contact
+    setSelectedContact(contactEmail);
+
+    // Filter messages between the signed-in user and the selected contact
     const filtered = messages.filter(
       (message) =>
         (message.senderEmail === userEmail && message.recipientEmail === contactEmail) ||
         (message.senderEmail === contactEmail && message.recipientEmail === userEmail)
     );
+
+    // Update the filtered messages state
     setFilteredMessages(filtered);
+
+    // Mark all selected messages as read (if not already read)
+    filtered.forEach((message) => {
+      if (!message.isRead) {
+        markAsRead(message._id); // Call markAsRead when a message is selected
+      }
+    });
   };
 
-  const handleSelectContact = (contactEmail) => {
-    setSelectedContact(contactEmail);
-    filterMessages(contactEmail);
-  };
+
+const markAsRead = async (messageId) => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/messages/${messageId}/read`, {
+      method: 'PUT',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to mark message as read');
+    }
+
+    const updatedMessage = await response.json();
+    console.log('Message marked as read:', updatedMessage);
+    // Update the message state to reflect the changes, without modifying createdAt
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) =>
+        msg._id === messageId ? { ...msg, isRead: true, readStamp: updatedMessage.readStamp } : msg
+      )
+    );
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+  }
+};
 
   return (
     <div className="messages-main">
@@ -180,7 +193,8 @@ export default function Messages({ user }) {
                 filteredMessages.map((msg, idx) => (
                   <div key={idx} className="message-item">
                     <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
-                    <div className="timestamp">{new Date(msg.createdAt).toLocaleString()}</div>
+                    <div className="timestamp">Sent: {new Date(msg.createdAt).toLocaleString()}</div>
+                    <div className="read-tag">Read: {new Date(msg.readStamp).toLocaleString()}</div>
                   </div>
                 ))
               ) : (
@@ -201,7 +215,7 @@ export default function Messages({ user }) {
             )
           )}
         </div>
-        {view === 'messages' && (
+        {view === 'messages' && selectedContact && (
           <form className="send-message-form" onSubmit={handleSendMessage}>
             <input
               type="text"
