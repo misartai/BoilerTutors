@@ -15,6 +15,7 @@ import PayLedger from './components/PayLedger';
 import ProtectedRoute from './components/Protectedroute';
 import ProfileSettings from './components/ProfileSettings';
 import Messaging from './components/Messaging';
+import DiscussionBoard from './components/DiscussionBoard'; // Import the DiscussionBoard component
 
 
 
@@ -39,6 +40,12 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           }
+        />
+        <Route path="/discussion-board" element={
+          <ProtectedRoute>
+            <DiscussionBoard />
+          </ProtectedRoute>
+          } 
         />
         <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
         <Route path="/messaging" element={

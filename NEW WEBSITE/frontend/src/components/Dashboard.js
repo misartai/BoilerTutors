@@ -10,6 +10,8 @@ import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
 import ContactProf from './ContactProf'
 import logo from '../boilerTutorsLogo.png';
+import DiscussionBoard from './DiscussionBoard'; 
+
 
 import './Dashboard.css';
 
@@ -97,6 +99,8 @@ function Dashboard() {
         return <PayLedger />;
       case 'contactProf':
         return <ContactProf />
+      case 'discussionBoard':
+        return <DiscussionBoard />; // Render the DiscussionBoard 
   
       case 'dashboard':
       default:
@@ -135,6 +139,7 @@ function Dashboard() {
           {user.isTutor && <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>}
           {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report An Account</button>}
           {user.isTutor && <button onClick={() => setCurrentPage('payLedger')}>View Pay Ledger</button>}
+          <button onClick={() => setCurrentPage('discussionBoard')}>Discussion Board</button>{' '}
           <button onClick={() => navigate('/settings')}>Change Profile Settings</button>
           </div>
 

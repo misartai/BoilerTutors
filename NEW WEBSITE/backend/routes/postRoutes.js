@@ -44,6 +44,38 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
+// Upvote a post
+router.put('/:id/upvote', authenticate, async (req, res) => {
+  console.log('Upvote route hit');
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).send('Post not found');
+    }
+    post.upvotes += 1;
+    const updatedPost = await post.save();
+    res.json(updatedPost);
+  } catch (err) {
+    res.status(500).send('Failed to upvote post');
+  }
+});
+
+// Downvote a post
+router.put('/:id/downvote', authenticate, async (req, res) => {
+  console.log('Downvote route hit');
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).send('Post not found');
+    }
+    post.downvotes += 1;
+    const updatedPost = await post.save();
+    res.json(updatedPost);
+  } catch (err) {
+    res.status(500).send('Failed to downvote post');
+  }
+});
+
 // Edit a post
 router.put('/:id', authenticate, async (req, res) => {
   const { title, content } = req.body;
@@ -102,6 +134,7 @@ router.put('/:id/favourite', authenticate, async (req, res) => {
     res.status(500).send('Failed to toggle favourite status');
   }
 });
+
 
 console.log(authenticate);
 
