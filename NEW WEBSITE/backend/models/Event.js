@@ -6,10 +6,12 @@ const eventSchema = new mongoose.Schema({
   end: { type: Date, required: true },
   email: { type: String, required: true },
   tutorName: { type: String, required: true },
-  notifyTime: { type: String, default: '1 hour' },
+  notifyTime: { type: Number, default: 60 },
   optInNotifications: { type: Boolean, default: false },
-  eventType: { type: String, enum: ['pso', 'office hours', 'appointment'], default: 'appointment' }, 
-});
+  eventType: { type: String, enum: ['pso', 'office hours', 'appointment'], default: 'appointment' },
+  isCancelled: { type: Boolean, default: false }, // New field
+  cancellationReason: { type: String }, // New field
+}, { timestamps: true });
 
 const Event = mongoose.model('Event', eventSchema);
 

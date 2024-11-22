@@ -15,9 +15,9 @@ export default function MyCalendar({ user }) {
     endTime: '',
     email: userEmail,
     tutorEmail: '',
-    notifyTime: '1 hour',
+    notifyTime: '1 hour', // Default to '1 hour'
     optInNotifications: true,
-    eventType: '',
+    eventType: 'Appointment', // Default event type to "Appointment"
   });
   const [tutors, setTutors] = useState([]);
   const [selectedTutor, setSelectedTutor] = useState('');
@@ -83,6 +83,47 @@ export default function MyCalendar({ user }) {
     fetchTutors();
   }, []);
 
+  const handleCancelEvent = async (eventId) => {
+    const reason = prompt('Enter the reason for cancellation:');
+    if (!reason) {
+      alert('Cancellation reason is required.');
+      return;
+    }
+  
+    console.log('Sending cancellation request for eventId:', eventId);  // Ensure eventId is being logged
+    console.log('Sending cancellation reason:', reason);  // Log cancellation reason
+    console.log('User email:', userEmail);  // Log user email
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/events/cancel', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId,  // Send eventId in the body
+          cancellationReason: reason,  // Send cancellation reason
+          userEmail: userEmail  // Send user email
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error cancelling event:', errorData);
+        alert(`Error: ${errorData.message || 'Failed to cancel event'}`);
+        return;
+      }
+  
+      const data = await response.json();
+      setEvents((prevEvents) => prevEvents.filter((event) => event._id !== eventId));
+  
+      alert('Event cancelled successfully and email sent to the student.');
+    } catch (error) {
+      console.error('Error cancelling event:', error);
+      alert('There was an error cancelling the event. Please try again.');
+    }
+  };
+  
+  
+  
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -132,6 +173,8 @@ export default function MyCalendar({ user }) {
             notifyTime: data.notifyTime,
             optInNotifications: data.optInNotifications,
             eventType: data.eventType,
+            isCancelled: data.isCancelled,
+            cancellationReason: data.cancellationReason,
           },
         },
       ]);
@@ -167,12 +210,27 @@ export default function MyCalendar({ user }) {
       ? event.eventType === eventTypeFilter
       : true;
 
-    return matchesTutor && matchesStudent && matchesEventName && matchesEventType;
+    // Exclude cancelled events from the calendar
+    return (
+      matchesTutor && matchesStudent && matchesEventName && matchesEventType && !event.isCancelled
+    );
   });
 
   const renderEventContent = (eventInfo) => {
     const startTime = eventInfo.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const endTime = eventInfo.event.end ? eventInfo.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    const endTime = eventInfo.event.end
+      ? eventInfo.event.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '';
+  
+    const canCancel =
+      (eventInfo.event.extendedProps.email === userEmail ||
+        eventInfo.event.extendedProps.tutorName === userEmail) &&
+      !eventInfo.event.extendedProps.isCancelled;
+  
+    console.log("Event clicked:", eventInfo.event);  // Log the entire event object
+    const eventId = eventInfo.event.id;  // Access the event ID from FullCalendar's event object
+    console.log("Event ID:", eventId);  // Log the event ID to ensure it's correct
+  
     return (
       <div>
         <b>{eventInfo.event.title}</b>
@@ -180,9 +238,18 @@ export default function MyCalendar({ user }) {
         <div className={`event-type ${eventInfo.event.extendedProps.eventType}`}>
           {eventInfo.event.extendedProps.eventType}
         </div>
+        {eventInfo.event.extendedProps.isCancelled && (
+          <div style={{ color: 'red', fontSize: '0.9em' }}>
+            <strong>Cancelled</strong>: {eventInfo.event.extendedProps.cancellationReason}
+          </div>
+        )}
+        {!eventInfo.event.extendedProps.isCancelled && canCancel && (
+          <button onClick={() => handleCancelEvent(eventId)}>Cancel Event</button>
+        )}
       </div>
     );
   };
+  
 
   return (
     <div className="calendar-container">
@@ -249,7 +316,7 @@ export default function MyCalendar({ user }) {
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
               initialView="dayGridMonth"
               selectable={true}
-              events={filteredEvents}
+              events={filteredEvents} // Pass filtered events (without cancelled ones)
               dateClick={(info) => setFormData({ ...formData, date: info.dateStr })}
               displayEventTime={true}
               eventContent={renderEventContent}
@@ -326,10 +393,9 @@ export default function MyCalendar({ user }) {
                 <div>
                   <label>Event Type:</label>
                   <select name="eventType" value={formData.eventType} onChange={handleInputChange} required>
-                    <option value="">Select Event Type</option>
+                    <option value="Appointment">Appointment</option>
+                    <option value="Office">Office</option>
                     <option value="PSO">PSO</option>
-                    <option value="Office Hours">Office Hours</option>
-                    <option value="General">General</option>
                   </select>
                 </div>
                 <button type="submit">Book Event</button>

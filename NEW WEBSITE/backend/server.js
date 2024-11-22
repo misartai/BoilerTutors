@@ -77,6 +77,74 @@ tutorSchema.set('toJSON', { virtuals: true });
 // Tutor model
 const Tutor = mongoose.model('Tutor', tutorSchema);
 
+app.patch('/api/events/cancel', async (req, res) => {
+  const { eventId, cancellationReason, userEmail } = req.body;
+
+  // Log the eventId for debugging
+  console.log('Received eventId:', eventId);
+
+  try {
+    // Convert eventId to a valid ObjectId
+    const objectId = mongoose.Types.ObjectId(eventId); // Convert to ObjectId
+    
+    // Validate that the ObjectId is correctly formatted
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ message: 'Invalid event ID' });
+    }
+
+    // Find the event by the ObjectId
+    const event = await Event.findById(objectId);  // Use objectId here for querying
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    // Check if the user has permission to cancel the event
+    if (event.email !== userEmail && event.tutorName !== userEmail) {
+      return res.status(403).json({ message: 'You are not authorized to cancel this event' });
+    }
+
+    // Cancel the event
+    event.isCancelled = true;
+    event.cancellationReason = cancellationReason || 'No reason provided';
+    await event.save();  // Save the cancellation status to the event
+
+    // Send the cancellation email
+    const student = await User.findOne({ email: event.email });
+    if (student) {
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: student.email,
+        subject: `Your Appointment with ${event.tutorName} has been Cancelled`,
+        text: `
+          Dear ${student.name},\n\n
+          We regret to inform you that your appointment with ${event.tutorName} scheduled for ${event.start} has been cancelled.\n\n
+          Cancellation Reason: ${event.cancellationReason}\n\n
+          If you have any questions or need to reschedule, please contact your tutor directly.\n\n
+          Thank you for understanding.\n\n
+          Best regards,\n
+          BoilerTutors
+        `,
+      };
+
+      // Send the cancellation email
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error('Error sending cancellation email:', err);
+        } else {
+          console.log('Cancellation email sent:', info.response);
+        }
+      });
+    }
+
+    // Respond with success
+    res.status(200).json({ message: 'Event cancelled successfully', event });
+  } catch (error) {
+    console.error('Error cancelling event:', error);
+    res.status(500).json({ error: 'Error cancelling event' });
+  }
+});
+
+
 // Fetch all users who are tutors (for dropdown)
 app.get('/api/tutors', async (req, res) => {
   try {
