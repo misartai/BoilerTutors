@@ -97,6 +97,10 @@
   cursor: pointer;
 }
 
-.read-tag {
+.send-message-form button {
+  display: block;
+}
 
+.announcement-form button {
+  display: block;
 }

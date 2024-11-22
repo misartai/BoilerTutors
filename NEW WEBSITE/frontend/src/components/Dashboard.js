@@ -8,7 +8,7 @@ import RateTutor from './RateTutor'; // Import your RateTutor component
 import ReportAccount from './ReportAccount';
 import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
-import ContactProf from './ContactProf'
+//import ContactProf from './ContactProf'
 import logo from '../boilerTutorsLogo.png';
 
 import './Dashboard.css';
@@ -95,8 +95,8 @@ function Dashboard() {
         return <ReportAccount />;
       case 'payLedger':
         return <PayLedger />;
-      case 'contactProf':
-        return <ContactProf />
+     // case 'contactProf':
+       // return <ContactProf />
   
       case 'dashboard':
       default:
