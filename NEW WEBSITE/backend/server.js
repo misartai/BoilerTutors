@@ -11,7 +11,7 @@ const postRoutes = require('./routes/postRoutes'); // Import post routes
 const draftsRouter = require('./models/Draft');
 const { sendNotificationEmail, sendAnnouncementEmail } = require('./routes/auth');
 require('dotenv').config(); // Load environment variables from .env file
-
+const router = express.Router();
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
@@ -23,6 +23,13 @@ mongoose.connect('mongodb+srv://aryanshahu13:VyQrFxeiIhkLIWFI@boilertutors.jk0hb
 
 // Setup Nodemailer transporter (adjust with your email provider settings)
 const transporter = nodemailer.createTransport({
+  service: 'gmail',  // You can use other services (e.g., Outlook, Yahoo)
+  auth: {
+    user: 'boilertutors420',
+    pass: 'zins bweo neuh zzgz'
+  }
+});
+const transporter1 = nodemailer.createTransport({
   service: 'gmail',  // You can use other services (e.g., Outlook, Yahoo)
   auth: {
     user: 'boilertutors420',
@@ -121,8 +128,6 @@ app.post('/api/tutors/:tutorId/reviews', async (req, res) => {
   }
 });
 
-// ----- Payment Functionality -----
-
 // Schema for payments
 const paymentSchema = new mongoose.Schema({
   studentName: { type: String, required: true },
@@ -131,6 +136,7 @@ const paymentSchema = new mongoose.Schema({
       status: { type: String, required: true },
       timestamp: { type: String, required: true },
       reason: { type: String, default: '' }, // Reason for denial if applicable
+      amount: {type: String, default: '10'},
     },
   ],
 });
@@ -164,9 +170,9 @@ app.post('/send-email', async (req, res) => {
 });
 
 
-app.post('/students/:studentName/payments', async (req, res) => {
+/*app.post('/students/:studentName/payments', async (req, res) => {
   try {
-      const { status, timestamp, reason } = req.body;
+      const { status, reason } = req.body;
       const studentName = req.params.studentName;
 
       let paymentRecord = await Payment.findOne({ studentName });
@@ -176,92 +182,200 @@ app.post('/students/:studentName/payments', async (req, res) => {
       }
 
       // Prepare new payment entry
+      const timestamp = new Date().toISOString(); // Make sure the timestamp is in ISO format
+      console.log('Saving payment with timestamp:', timestamp); // Log the timestamp
       const newEntry = { status, timestamp, reason };
       paymentRecord.payments.push(newEntry);
       await paymentRecord.save();
-
-      // Send email notification if payment status is updated
-      const subject = `Payment Status Updated: ${status}`;
-      const message = `The payment status for ${studentName} has been updated to ${status} on ${timestamp}. Reason: ${reason || 'N/A'}.`;
-      await sendEmail(subject, message); // Assuming sendEmail function is defined above
 
       res.json({ message: 'Payment status updated', paymentRecord });
   } catch (error) {
       console.error('Error updating payment status:', error);
       res.status(500).send('Error updating payment status');
   }
+});*/
+app.post('/students/:studentName/payments', async (req, res) => {
+  try {
+    const { status, reason } = req.body;
+    const studentName = req.params.studentName;
+
+    // Find or create the payment record for the student
+    let paymentRecord = await Payment.findOne({ studentName });
+
+    if (!paymentRecord) {
+      paymentRecord = new Payment({ studentName, payments: [] });
+    }
+
+    // Prepare new payment entry
+    const timestamp = new Date().toISOString(); // ISO format timestamp
+    console.log('Saving payment with timestamp:', timestamp);
+    const newEntry = { status, timestamp, reason };
+
+    paymentRecord.payments.push(newEntry);
+    await paymentRecord.save();
+
+    // Prepare email details
+    const emailRecipient = await User.findOne({ name: studentName }); // Adjust as needed for your schema
+    if (!emailRecipient || !emailRecipient.email) {
+      console.warn('No email address found for student:', studentName);
+    } else {
+      const mailOptions = {
+        from: 'boilertutors420@gmail.com',
+        to: emailRecipient.email, // The student's email address
+        subject: `Payment Status Updated: ${status}`,
+        text: `Hello ${studentName},\n\nYour payment status has been updated to "${status}".\n\nReason: ${reason}\n\nTimestamp: ${timestamp}\n\nBest regards,\nBoilerTutors`,
+      };
+
+      // Send the email
+      transporter1.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending email:', error);
+        } else {
+          console.log('Email sent successfully:', info.response);
+        }
+      });
+    }
+
+    // Respond with updated payment record
+    res.json({ message: 'Payment status updated and email sent', paymentRecord });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).send('Error updating payment status');
+  }
 });
 
 
+
+// Confirm payment route
+app.post('/students/:studentId/payments', async (req, res) => {
+  const { studentId } = req.params;
+  const { status, timestamp, reason } = req.body;
+
+  try {
+    const paymentEntry = await Payment.findOneAndUpdate(
+      { studentId },
+      { $push: { payments: { status, timestamp, reason } } },
+      { new: true, upsert: true } // Create a new document if it doesn't exist
+    );
+
+    res.status(200).json(paymentEntry);
+  } catch (error) {
+    console.error('Error updating payment entry:', error);
+    res.status(500).json({ error: 'Error updating payment entry' });
+  }
+});
+
+// report
 const reportSchema = new mongoose.Schema({
-  studentId: { type: String, required: true },
+  studentName: { type: String, required: true },
   reports: [
     {
-      trackingId: { type: String, required: true },
-      details: { type: String, required: true },
-      date: { type: Date, default: Date.now }
+      trackingId: { type: String, required: true, unique: true },
+      timestamp: { type: String, required: true },
+      reason: { type: String, default: '' },
     }
   ]
 });
 
 const Report = mongoose.model('Report', reportSchema);
-app.post('/api/reports', async (req, res) => {
-  const { studentId, details } = req.body;
-  const trackingId = uuidv4();
+module.exports = Report;
 
+app.get('/reports', async (req, res) => {
   try {
-    // Find or create a report entry for the student
-    let reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      reportEntry = new Report({ studentId, reports: [] });
-    }
-
-    // Add the new report to the reports array
-    reportEntry.reports.push({ trackingId, details });
-
-    // Save the updated report entry
-    await reportEntry.save();
-
-    res.status(201).json({ trackingId, details });
-  } catch (error) {
-    console.error('Error submitting report:', error);
-    res.status(500).json({ error: 'Failed to submit report' });
-  }
-});
-
-app.get('/api/reports/:studentId', async (req, res) => {
-  const { studentId } = req.params;
-
-  try {
-    const reportEntry = await Report.findOne({ studentId });
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'No reports found for this student' });
-    }
-
-    res.json(reportEntry.reports); // Return the reports array for the student
+    const reports = await Report.find({});
+    res.status(200).json(reports);
   } catch (error) {
     console.error('Error fetching reports:', error);
-    res.status(500).json({ error: 'Error fetching reports' });
+    res.status(500).json({ message: 'Error fetching reports', error });
   }
 });
 
-app.get('/api/reports/details/:trackingId', async (req, res) => {
-  const { trackingId } = req.params;
 
+
+// Route to submit a report (with emails)
+app.post('/reports', async (req, res) => {
   try {
-    const reportEntry = await Report.findOne({ 'reports.trackingId': trackingId });
-
-    if (!reportEntry) {
-      return res.status(404).json({ error: 'Report not found' });
+    const { studentName, reason } = req.body;
+    const trackingId = Math.floor(10000 + Math.random() * 90000).toString(); // Inline tracking ID generation
+    const timestamp = new Date().toISOString();
+    
+    // Check if a report already exists for this student
+    let report = await Report.findOne({ studentName });
+    
+    // Check if the student exists
+    const student = await User.findOne({ name: studentName });
+    if (!student || !student.email) {
+      return res.status(404).send('Student email not found');
     }
 
-    const report = reportEntry.reports.find(report => report.trackingId === trackingId);
-    res.json(report);
-  } catch (error) {
-    console.error('Error fetching report details:', error);
-    res.status(500).json({ error: 'Error fetching report details' });
+    if (report) {
+      // If the report exists, push the new report entry into the reports array
+      report.reports.push({
+        trackingId,
+        timestamp,
+        reason
+      });
+      await report.save();
+    } else {
+      // If no report exists, create a new report entry
+      report = new Report({
+        studentName,
+        reports: [{
+          trackingId,
+          timestamp,
+          reason
+        }]
+      });
+      await report.save();
+    }
+
+    // Send an email notification to the student
+    const mailOptions = {
+      from: process.env.EMAIL, // Your email
+      to: student.email, // Student's email
+      subject: `Report Raised: ${studentName}`,
+      text: `
+        A new report has been raised against your account:
+        - Reason: ${reason}
+        - Tracking ID: ${trackingId}
+        - Timestamp: ${timestamp}
+        - Further Actions: Please contact an admin for further steps
+      `,
+    };
+
+    console.log('email', student.email);
+    await transporter1.sendMail(mailOptions);
+
+    // Send only one response after everything is done
+    res.status(200).json({
+      message: 'Report submitted successfully and email sent',
+      trackingId
+    });
+  } catch (err) {
+    console.error('Report submission error:', err);
+    res.status(500).send('Failed to submit report');
   }
 });
+
+
+
+
+app.get('/reports/:studentName', async (req, res) => {
+  try {
+    const { studentName } = req.params;
+    const reports = await Report.findOne({ studentName });
+
+    if (!reports) {
+      return res.status(404).json({ message: 'No reports found for this student.' });
+    }
+
+    res.status(200).json(reports);
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ message: 'Error fetching reports', error });
+  }
+});
+
 
 // ----- Event Functionality -----
 
