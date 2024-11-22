@@ -80,35 +80,32 @@ const Tutor = mongoose.model('Tutor', tutorSchema);
 app.patch('/api/events/cancel', async (req, res) => {
   const { eventId, cancellationReason, userEmail } = req.body;
 
-  // Log the eventId for debugging
   console.log('Received eventId:', eventId);
+  console.log('Received cancellation reason:', cancellationReason);
 
   try {
-    // Convert eventId to a valid ObjectId
-    const objectId = mongoose.Types.ObjectId(eventId); // Convert to ObjectId
-    
-    // Validate that the ObjectId is correctly formatted
+    // Ensure the eventId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(eventId)) {
       return res.status(400).json({ message: 'Invalid event ID' });
     }
 
-    // Find the event by the ObjectId
-    const event = await Event.findById(objectId);  // Use objectId here for querying
+    // Find the event by its ID
+    const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    // Check if the user has permission to cancel the event
+    // Ensure the user is authorized to cancel the event
     if (event.email !== userEmail && event.tutorName !== userEmail) {
       return res.status(403).json({ message: 'You are not authorized to cancel this event' });
     }
 
-    // Cancel the event
+    // Mark the event as cancelled
     event.isCancelled = true;
-    event.cancellationReason = cancellationReason || 'No reason provided';
-    await event.save();  // Save the cancellation status to the event
+    event.cancellationReason = cancellationReason;
+    await event.save();
 
-    // Send the cancellation email
+    // Send cancellation email to the student
     const student = await User.findOne({ email: event.email });
     if (student) {
       const mailOptions = {
@@ -126,7 +123,6 @@ app.patch('/api/events/cancel', async (req, res) => {
         `,
       };
 
-      // Send the cancellation email
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {
           console.error('Error sending cancellation email:', err);
@@ -136,13 +132,13 @@ app.patch('/api/events/cancel', async (req, res) => {
       });
     }
 
-    // Respond with success
     res.status(200).json({ message: 'Event cancelled successfully', event });
   } catch (error) {
     console.error('Error cancelling event:', error);
     res.status(500).json({ error: 'Error cancelling event' });
   }
 });
+
 
 
 // Fetch all users who are tutors (for dropdown)
@@ -463,13 +459,21 @@ function calculateReminderTime(appointmentTime, notifyTime) {
 // Route to get all events from the database
 app.get('/api/events', async (req, res) => {
   try {
-    const events = await Event.find(); // Fetch all events from MongoDB
-    res.json(events); // Send the events as a response
+    // Fetch events where 'isCancelled' is either false or undefined
+    const events = await Event.find({ 
+      $or: [
+        { isCancelled: { $ne: true } },  // Where isCancelled is not true
+        { isCancelled: { $exists: false } }  // Or where isCancelled doesn't exist
+      ]
+    });
+
+    res.json(events);  // Send the events as a response
   } catch (err) {
     console.error('Error retrieving events:', err);
     res.status(500).send('Error retrieving events');
   }
 });
+
 
 // Route to add a new event
 app.post('/api/events', async (req, res) => {

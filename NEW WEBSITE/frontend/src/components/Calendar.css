@@ -25,12 +25,14 @@
 
 /* Styling for the booking form */
 .booking-form {
-  width: 35%;
+  width: 100%; /* Ensure it takes full width */
+  max-width: 400px; /* Set max width to match buttons */
   background-color: #ffffff; /* White background for contrast */
-  padding: 15px; /* Consistent padding */
+  padding: 20px; /* Consistent padding */
   border-radius: 8px;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
   position: relative; /* Position relative for better alignment */
+  margin-bottom: 20px; /* Space below the form */
 }
 
 /* Heading style in the booking form */
@@ -40,7 +42,7 @@
 
 /* Style for each form group */
 .booking-form div {
-  margin-bottom: 8px; /* Reduced margin */
+  margin-bottom: 20px; /* Reduced margin */
 }
 
 /* Label styles */
@@ -77,6 +79,7 @@
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s; /* Smooth transition */
+  width: 100%; /* Ensure buttons stretch across */
 }
 
 /* Button hover effect */
@@ -140,4 +143,3 @@
 .event-type.office {
   color: #ff6347;
 }
-
