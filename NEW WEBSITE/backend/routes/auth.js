@@ -317,12 +317,9 @@ router.put('/update-tutor-status', async (req, res) => {
 });
 
 // Route to get logged-in user data
-router.get('/me', async (req, res) => {
-  const token = req.header('Authorization').replace('Bearer ', '');
-
+router.get('/me', authenticate, async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(req.userId).populate('viewedPosts');
     if (!user) {
       return res.status(404).send('User not found');
     }
@@ -335,12 +332,16 @@ router.get('/me', async (req, res) => {
 
 // Middleware to authenticate the user via JWT
 const authenticate = (req, res, next) => {
-  const token = req.header('Authorization').replace('Bearer ', '');
+  const authHeader = req.header('Authorization');
+  if (!authHeader) return res.status(401).send('Access Denied');
+
+  const token = authHeader.replace('Bearer ', '');
   if (!token) return res.status(401).send('Access Denied');
 
   try {
     const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified; // Attach user data to req for later use
+    req.userId = verified.userId; // Set userId directly
+    req.user = verified; // Optional: keep this if other code uses req.user
     next();
   } catch (err) {
     res.status(400).send('Invalid Token');

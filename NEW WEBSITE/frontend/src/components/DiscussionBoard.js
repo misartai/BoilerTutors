@@ -11,20 +11,31 @@ const DiscussionBoard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [showFavorites, setShowFavorites] = useState(false);
-  // DiscussionBoard.js
-const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
+  const [showUnvisited, setShowUnvisited] = useState(false);
 
+  const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
+
+  // State to keep track of which posts are expanded
+  const [expandedPosts, setExpandedPosts] = useState({});
+
+  // Function to handle expanding a post
+  const handleExpand = (postId) => {
+    setExpandedPosts((prevExpandedPosts) => ({
+      ...prevExpandedPosts,
+      [postId]: !prevExpandedPosts[postId],
+    }));
+  };
 
   // Fetch posts and user info on component mount
   useEffect(() => {
     const fetchPostsAndUser = async () => {
       try {
         // Fetch posts
-        const postsResponse = await axios.get('http://localhost:5000/posts/', {
+        const postsResponse = await axios.get('http://localhost:5000/api/postRoutes/', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         setPosts(postsResponse.data);
-  
+
         // Fetch current user
         const userResponse = await axios.get('http://localhost:5000/api/auth/me', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -35,7 +46,7 @@ const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
         console.error('Error fetching data:', error);
       }
     };
-  
+
     fetchPostsAndUser();
   }, []);
 
@@ -154,8 +165,6 @@ const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
     }
   };
 
-
-
   // Search Filter
   const filteredPosts = posts.filter(
     (post) =>
@@ -163,6 +172,14 @@ const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (post.author?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
+
+  // Updated logic to filter unvisited posts (not expanded)
+  let postsToDisplay = filteredPosts;
+  if (showUnvisited) {
+    postsToDisplay = filteredPosts.filter(
+      (post) => !expandedPosts[post._id]
+    );
+  }
 
   return (
     <div>
@@ -174,6 +191,9 @@ const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
         </button>
         <button onClick={() => setShowFavorites(!showFavorites)}>
           {showFavorites ? 'View All Posts' : 'View Favorites'}
+        </button>
+        <button onClick={() => setShowUnvisited(!showUnvisited)}>
+          {showUnvisited ? 'View All Posts' : 'View Unvisited Posts'}
         </button>
         <input
           type="text"
@@ -214,13 +234,15 @@ const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
       <hr />
 
       <h2>Posts</h2>
-      {filteredPosts.length === 0 ? (
+      {postsToDisplay.length === 0 ? (
         <p>No posts found.</p>
       ) : (
-        filteredPosts.map((post) => (
+        postsToDisplay.map((post) => (
           <Post
             key={post._id}
             post={post}
+            isExpanded={!!expandedPosts[post._id]}
+            handleExpand={() => handleExpand(post._id)}
             currentUserId={currentUser?._id}
             currentUserFavorites={currentUserFavorites || []}
             handleDeletePost={handleDeletePost}
@@ -237,4 +259,3 @@ const [currentUserFavorites, setCurrentUserFavorites] = useState([]);
 };
 
 export default DiscussionBoard;
-

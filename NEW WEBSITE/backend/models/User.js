@@ -28,7 +28,8 @@ const userSchema = new mongoose.Schema({
   validAccount: {
     type: Boolean,
     default: true  // Default to true for students, will be false for professors until admin approval
-  }
+  },
+  viewedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
 });
 
 module.exports = mongoose.model('User', userSchema);

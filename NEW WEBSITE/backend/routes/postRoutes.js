@@ -4,12 +4,16 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 
 const authenticate = (req, res, next) => {
-  const token = req.header('Authorization').replace('Bearer ', '');
+  const authHeader = req.header('Authorization');
+  if (!authHeader) return res.status(401).send('Access Denied');
+
+  const token = authHeader.replace('Bearer ', '');
   if (!token) return res.status(401).send('Access Denied');
 
   try {
     const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified; // Attach user data to req for later use
+    req.userId = verified.userId;
+    console.log('Authenticated user ID:', req.userId); // Debugging statement
     next();
   } catch (err) {
     res.status(400).send('Invalid Token');
@@ -41,6 +45,33 @@ router.get('/', authenticate, async (req, res) => {
   } catch (err) {
     console.error('Error fetching posts:', err);
     res.status(500).send('Failed to fetch posts');
+  }
+});
+
+// Mark a post as viewed
+router.put('/:id/markAsViewed', authenticate, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const postId = req.params.id;
+
+    console.log('Marking post as viewed:', { userId, postId }); // Debugging statement
+
+    await User.findByIdAndUpdate(userId, { $addToSet: { viewedPosts: postId } });
+
+    res.json({ message: 'Post marked as viewed' });
+  } catch (err) {
+    console.error('Error in markAsViewed:', err); // Debugging statement
+    res.status(500).send('Failed to mark post as viewed');
+  }
+});
+
+// Get current user data
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).populate('viewedPosts');
+    res.json(user);
+  } catch (err) {
+    res.status(500).send('Failed to fetch user data');
   }
 });
 

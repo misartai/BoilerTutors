@@ -95,4 +95,3 @@ router.get('/announcements', authenticate, async (req, res) => {
 });
 
 module.exports = router;
-'
