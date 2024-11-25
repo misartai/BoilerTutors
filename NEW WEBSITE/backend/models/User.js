@@ -28,6 +28,21 @@ const userSchema = new mongoose.Schema({
   validAccount: {
     type: Boolean,
     default: true  // Default to true for students, will be false for professors until admin approval
+  },
+  enrolledCourses: {
+    type: [String],  // Array of course names/IDs
+    default: function () {
+      return this.accountType === 'student' ? [] : undefined;
+    }
+  },
+  profCourses: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Course',
+    default: [],
+  },
+  tutorCourses: {
+    type: [String],  // Array of course names/IDs
+    default: []
   }
 });
 
