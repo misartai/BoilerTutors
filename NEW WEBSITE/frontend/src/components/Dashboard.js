@@ -10,6 +10,8 @@ import ConfirmPayment from './ConfirmPayment';
 import PayLedger from './PayLedger';
 import ContactProf from './ContactProf'
 import logo from '../boilerTutorsLogo.png';
+import CreateCourse from './CreateCourse';
+import AddCourse from './AddCourse';
 
 import './Dashboard.css';
 
@@ -18,38 +20,63 @@ function Dashboard() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard'); // State to manage current page
+  const [coursesNames, setCourseNames] = useState([]);
   const navigate = useNavigate();
-  let inactivityTimeout;
+  let popUpTimeout, logoutTimeout;
 
-  // Reset the inactivity timer
-  const resetInactivityTimer = () => {
-    clearTimeout(inactivityTimeout);
-    startInactivityTimer();
+  const handleSignOut = () => {
+    localStorage.removeItem('token');  // Remove token from localStorage
+    navigate('/');  // Redirect to login page
   };
 
-  // Start the inactivity timer
-  const startInactivityTimer = () => {
-    inactivityTimeout = setTimeout(() => {
-      if (window.confirm("Press OK to show activity")) {
-        resetInactivityTimer(); // Reset the timer if user interacts
+  const startInactivityTimers = () => {
+    const threeHours = 5 * 1000; // 3 hours
+    const fourHours = 6 * 1000; // 4 hours
+
+    // Pop-up timer
+    popUpTimeout = setTimeout(() => {
+      const userResponse = window.confirm("You've been inactive for 3 hours. Press OK to continue.");
+      if (userResponse) {
+        resetInactivityTimers(); // Reset timers on interaction
       }
-    }, 3 * 60 * 60 * 1000); // 3 hours
+    }, threeHours);
+
+    // Logout timer
+    logoutTimeout = setTimeout(() => {
+      alert("You have been logged out due to inactivity.");
+      handleSignOut(); // Perform logout
+    }, fourHours);
+  };
+
+  // Reset the inactivity timer
+  const resetInactivityTimers = () => {
+    clearTimeout(popUpTimeout);
+    clearTimeout(logoutTimeout);
+    startInactivityTimers();
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserAndCourses = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('No token found. Please log in.');
         }
-        const response = await axios.get('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+
+        // Fetch user data
+        const userResponse = await axios.get('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        setUser(response.data);
+        const fetchedUser = userResponse.data;
+        setUser(fetchedUser);
+
+        // Fetch courses if user is a professor
+        if (fetchedUser.accountType === 'professor') {
+          const courseResponse = await axios.get(`http://localhost:5000/api/courses`);
+          setCourseNames(courseResponse.data);
+          console.log('Courses fetched:', courseResponse.data);
+        }
       } catch (err) {
         console.error(err);
         setError('Failed to load user data: ' + err.message);
@@ -58,17 +85,22 @@ function Dashboard() {
       }
     };
 
-    fetchUserData();
-    startInactivityTimer();
-    window.addEventListener('mousemove', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
+    fetchUserAndCourses();
+    startInactivityTimers();
+    window.addEventListener('mousemove', resetInactivityTimers);
+    window.addEventListener('keydown', resetInactivityTimers);
 
     return () => {
-      clearTimeout(inactivityTimeout); // Clear timeout on unmount
-      window.removeEventListener('mousemove', resetInactivityTimer);
-      window.removeEventListener('keydown', resetInactivityTimer);
+      clearTimeout(popUpTimeout);
+      clearTimeout(logoutTimeout);
+      window.removeEventListener("mousemove", resetInactivityTimers);
+      window.removeEventListener("keydown", resetInactivityTimers);
     };
   }, []);
+
+  const handleCourseClick = (courseId) => {
+    navigate(`/courses/${courseId}`); // Redirect to the course details page
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -97,6 +129,10 @@ function Dashboard() {
         return <PayLedger />;
       case 'contactProf':
         return <ContactProf />
+      case 'createCourse':
+        return user && <CreateCourse user={user} />;
+      case 'addCourse':
+        return user && <AddCourse user={user} onReturn={() => setCurrentPage('dashboard')} />;
   
       case 'dashboard':
       default:
@@ -104,14 +140,23 @@ function Dashboard() {
           <div>
             <h1>Welcome, {user.name}</h1>
             <p>Email: {user.email}</p>
+            <h2>Courses:</h2>
+            {user?.accountType === 'professor' && (
+              <div className="course-buttons">
+                {coursesNames.length > 0 ? (
+                  coursesNames.map((course) => (
+                    <button key={course._id} onClick={() => handleCourseClick(course._id)}>
+                    {course.courseName}
+                    </button>
+                  ))
+                )  : (
+                  <p>No courses found.</p>
+                )}
+              </div>
+            )}
           </div>
         );
     }
-  };
-
-  const handleSignOut = () => {
-    localStorage.removeItem('token');  // Remove token from localStorage
-    navigate('/');  // Redirect to login page
   };
 
   return (
@@ -134,6 +179,8 @@ function Dashboard() {
           <button onClick={() => setCurrentPage('contactProf')}>Contact A Professor</button>
           {user.isTutor && <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>}
           {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report An Account</button>}
+          {user.accountType === 'professor' && <button onClick={() => setCurrentPage('createCourse')}>Create Course</button>}
+          {user.accountType === 'student' && <button onClick={() => setCurrentPage('addCourse')}>Add Course</button>}
           {user.isTutor && <button onClick={() => setCurrentPage('payLedger')}>View Pay Ledger</button>}
           <button onClick={() => navigate('/settings')}>Change Profile Settings</button>
           </div>
