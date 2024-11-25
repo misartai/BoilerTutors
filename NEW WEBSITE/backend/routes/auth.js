@@ -548,5 +548,36 @@ router.get('/history/:userId', authenticate, async (req, res) => {
   }
 });
 
+// Create a new course
+router.post('/courses', async (req, res) => {
+  const { courseName, courseDescription, professorId } = req.body;
+
+  try {
+
+    if (!courseName || !courseDescription || !professorId) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Create the course in the database
+    const newCourse = new Course({
+      courseName,
+      courseDescription,
+      professors: [professorId],
+    });
+
+    const savedCourse = await newCourse.save();
+
+    // Update the professor's profCourses array
+    await User.findByIdAndUpdate(professorId, {
+      $push: { profCourses: savedCourse._id },
+    });
+
+    res.status(201).json({ message: 'Course created successfully!', course: savedCourse });
+  } catch (err) {
+    console.error('Error creating course:', err);
+    res.status(500).json({ message: 'Failed to create course.' });
+  }
+});
+
 
 module.exports = router;
