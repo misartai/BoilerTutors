@@ -13,6 +13,12 @@ const postSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now },
     },
   ],
+  // Add the visibility field
+  visibility: {
+    type: String,
+    enum: ['everyone', 'only_me'],
+    default: 'everyone',
+  },
   isFavourite: { type: Boolean, default: false },
   upvotes: { type: Number, default: 0 }, // New field for upvotes
   downvotes: { type: Number, default: 0 }, // New field for downvotes

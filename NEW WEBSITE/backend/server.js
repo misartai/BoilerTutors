@@ -139,7 +139,46 @@ app.patch('/api/events/cancel', async (req, res) => {
   }
 });
 
+app.get('/api/courses', async (req, res) => {
+  try {
+    const courses = await Course.find(); // Fetch all courses
+    res.status(200).json(courses);
+  } catch (err) {
+    console.error('Error fetching courses:', err.message);
+  }
+});
 
+app.get('/courses/:id', async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found.' });
+    }
+    res.status(200).json(course);
+  } catch (err) {
+    console.error('Error fetching course:', err);
+    res.status(500).json({ message: 'Failed to fetch course.' });
+  }
+});
+
+app.post('/api/students/:id/enrol', async (req, res) => {
+  const { enroledCourses } = req.body;
+
+  try {
+    const student = await User.findByIdAndUpdate(
+      req.params.id,
+      { enroledCourses },
+      { new: true }
+    );
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found.' });
+    }
+    res.status(200).json(student);
+  } catch (err) {
+    console.error('Error updating enrolled courses:', err.message);
+    res.status(500).json({ message: 'Failed to update enrolled courses.' });
+  }
+});
 
 // Fetch all users who are tutors (for dropdown)
 app.get('/api/tutors', async (req, res) => {

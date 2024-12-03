@@ -15,6 +15,7 @@ import PayLedger from './components/PayLedger';
 import ProtectedRoute from './components/Protectedroute';
 import ProfileSettings from './components/ProfileSettings';
 import Messaging from './components/Messaging';
+import CourseDetails from './components/CourseDetails';
 import DiscussionBoard from './components/DiscussionBoard'; // Import the DiscussionBoard component
 
 
@@ -55,6 +56,7 @@ function App() {
           }
          />
         {/* Add other routes as needed */}
+        <Route path="/courses/:courseId" element={<CourseDetails />} />
       </Routes>
     </Router>
   );

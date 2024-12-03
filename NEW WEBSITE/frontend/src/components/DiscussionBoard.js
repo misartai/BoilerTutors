@@ -1,3 +1,5 @@
+// DiscussionBoard.js
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './DiscussionBoard.css';
@@ -7,6 +9,7 @@ const DiscussionBoard = () => {
   const [posts, setPosts] = useState([]);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
+  const [newPostVisibility, setNewPostVisibility] = useState('everyone'); // Added visibility state
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -59,12 +62,14 @@ const DiscussionBoard = () => {
         {
           title: newPostTitle,
           content: newPostContent,
+          visibility: newPostVisibility, // Include visibility
         },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       setPosts([...posts, response.data]);
       setNewPostTitle('');
       setNewPostContent('');
+      setNewPostVisibility('everyone'); // Reset to default if desired
       setShowCreatePost(false);
     } catch (error) {
       console.error('Error creating post:', error);
@@ -176,8 +181,13 @@ const DiscussionBoard = () => {
   // Updated logic to filter unvisited posts (not expanded)
   let postsToDisplay = filteredPosts;
   if (showUnvisited) {
-    postsToDisplay = filteredPosts.filter(
-      (post) => !expandedPosts[post._id]
+    postsToDisplay = filteredPosts.filter((post) => !expandedPosts[post._id]);
+  }
+
+  // Apply favorites filter if showFavorites is true
+  if (showFavorites) {
+    postsToDisplay = postsToDisplay.filter((post) =>
+      currentUserFavorites.includes(post._id)
     );
   }
 
@@ -225,6 +235,17 @@ const DiscussionBoard = () => {
               placeholder="Type your post content here..."
               required
             />
+          </label>
+          <br />
+          <label>
+            Visibility:
+            <select
+              value={newPostVisibility}
+              onChange={(e) => setNewPostVisibility(e.target.value)}
+            >
+              <option value="everyone">Everyone</option>
+              <option value="only_me">Only Me</option>
+            </select>
           </label>
           <br />
           <button type="submit">Submit</button>

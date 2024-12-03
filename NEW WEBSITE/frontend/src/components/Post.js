@@ -1,3 +1,5 @@
+// Post.js
+
 import React, { useState } from 'react';
 import { FaHeart } from 'react-icons/fa';
 
@@ -6,7 +8,7 @@ const Post = ({
   isExpanded,
   handleExpand,
   currentUserId,
-  currentUserFavorites = [], // Default to empty array
+  currentUserFavorites = [],
   handleDeletePost,
   handleEditPost,
   handleAddReply,
@@ -14,9 +16,6 @@ const Post = ({
   handleDownvote,
   handleToggleFavorite,
 }) => {
-  // Log to help debug
-  console.log('Post component:', { post, currentUserFavorites });
-
   const isFavorited = currentUserFavorites
     .map(String)
     .includes(post._id.toString());
@@ -72,6 +71,10 @@ const Post = ({
                 <strong>Author:</strong> {post.author?.name || 'Unknown'} (
                 {post.author?.accountType || 'Unknown Role'})
               </p>
+              <p>
+                <strong>Visibility:</strong>{' '}
+                {post.visibility === 'everyone' ? 'Everyone' : 'Only Me'}
+              </p>
               <div className="post-actions">
                 <button onClick={() => handleUpvote(post._id)}>Upvote</button>
                 <span>{post.upvotes} Upvotes</span>
@@ -107,7 +110,7 @@ const Post = ({
                   {post.replies.map((reply, index) => (
                     <div key={index} className="reply">
                       <p>
-                        <strong>{reply.author?.name || 'Anonymous'}:</strong>
+                        <strong>{reply.author?.name || 'Anonymous'}:</strong>{' '}
                         {reply.content}
                       </p>
                     </div>
