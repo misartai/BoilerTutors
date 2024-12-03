@@ -9,6 +9,24 @@ const router = express.Router();
 const adminEmail = 'aryanshahu13@gmail.com';
 let tempUsers = {};  // Temporary storage for users who haven't confirmed email
 
+// Middleware to authenticate the user via JWT
+const authenticate = (req, res, next) => {
+  const authHeader = req.header('Authorization');
+  if (!authHeader) return res.status(401).send('Access Denied');
+
+  const token = authHeader.replace('Bearer ', '');
+  if (!token) return res.status(401).send('Access Denied');
+
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = verified.userId; // Set userId directly
+    req.user = verified; // Optional: keep this if other code uses req.user
+    next();
+  } catch (err) {
+    res.status(400).send('Invalid Token');
+  }
+};
+
 // Setup Nodemailer transporter (adjust with your email provider settings)
 const transporter = nodemailer.createTransport({
   service: 'gmail',  // You can use other services (e.g., Outlook, Yahoo)
@@ -330,23 +348,7 @@ router.get('/me', authenticate, async (req, res) => {
   }
 });
 
-// Middleware to authenticate the user via JWT
-const authenticate = (req, res, next) => {
-  const authHeader = req.header('Authorization');
-  if (!authHeader) return res.status(401).send('Access Denied');
 
-  const token = authHeader.replace('Bearer ', '');
-  if (!token) return res.status(401).send('Access Denied');
-
-  try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = verified.userId; // Set userId directly
-    req.user = verified; // Optional: keep this if other code uses req.user
-    next();
-  } catch (err) {
-    res.status(400).send('Invalid Token');
-  }
-};
 
 // Function to send notification email
 const sendNotificationEmail = async (recipientEmail, messageContent, senderEmail) => {
