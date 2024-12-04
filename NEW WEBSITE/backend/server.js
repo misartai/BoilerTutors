@@ -439,7 +439,26 @@ app.post('/students/:studentId/payments', async (req, res) => {
     res.status(500).json({ error: 'Error updating payment entry' });
   }
 });
-
+//payledger
+app.get('/api/payments', async (req, res) => {
+  try {
+      const payments = await Payment.find({});
+      const formattedPayments = payments.map(payment => ({
+          ...payment._doc,
+          payments: payment.payments.map(p => ({
+              amount: p.amount,
+              status: p.status,
+              timestamp: p.timestamp, // Ensure this field is included
+              reason: p.reason // Ensure this field is included
+          }))
+      }));
+      console.log("Fetched Payments:", JSON.stringify(formattedPayments, null, 2));
+      res.json(formattedPayments);
+  } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "Server error" });
+  }
+});
 // report
 const reportSchema = new mongoose.Schema({
   studentName: { type: String, required: true },
