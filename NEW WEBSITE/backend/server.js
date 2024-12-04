@@ -5,6 +5,7 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const authRoutes = require('./routes/auth'); // Assuming you have your auth routes in a separate file
 const User = require('./models/User'); // Import the User model
+const Course = require('./models/Course');
 const Event = require('./models/Event'); // Import the Event model
 const Message = require('./models/Message'); //Import Message model
 const postRoutes = require('./routes/postRoutes'); // Import post routes
@@ -148,6 +149,15 @@ app.get('/api/courses', async (req, res) => {
   }
 });
 
+app.get('/api/prof', async (req, res) => {
+  try {
+    const prof = await User.findById(req.body); // Fetch all courses
+    res.status(200).json(prof);
+  } catch (err) {
+    console.error('Error fetching prof:', err.message);
+  }
+});
+
 app.get('/courses/:id', async (req, res) => {
   try {
     const course = await Course.findById(req.params.id);
@@ -165,20 +175,80 @@ app.post('/api/students/:id/enrol', async (req, res) => {
   const { enroledCourses } = req.body;
 
   try {
-    const student = await User.findByIdAndUpdate(
-      req.params.id,
-      { enroledCourses },
-      { new: true }
-    );
+    const student = await User.findById(req.params.id);
     if (!student) {
       return res.status(404).json({ message: 'Student not found.' });
     }
-    res.status(200).json(student);
+
+    const oldCourses = student.enrolledCourses;
+    const newCourses = enroledCourses;
+
+    // Update user's enrolledCourses
+    student.enrolledCourses = newCourses;
+    await student.save();
+
+    // Update students in Course model
+    // Remove the student from courses they are no longer enrolled in
+    const removedCourses = oldCourses.filter(course => !newCourses.includes(course));
+    await Course.updateMany(
+      { _id: { $in: removedCourses } },
+      { $pull: { students: student._id } }
+    );
+
+    // Add the student to new courses
+    const addedCourses = newCourses.filter(course => !oldCourses.includes(course));
+    await Course.updateMany(
+      { _id: { $in: addedCourses } },
+      { $addToSet: { students: student._id } }
+    );
+
+    res.status(200).json({ message: 'Enrollment updated successfully!' });
   } catch (err) {
     console.error('Error updating enrolled courses:', err.message);
     res.status(500).json({ message: 'Failed to update enrolled courses.' });
   }
 });
+
+app.post('/api/students/:id/tutor', async (req, res) => {
+  const { tutorCourses } = req.body;
+
+  try {
+    const student = await User.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found.' });
+    }
+
+    const oldTutorCourses = student.tutorCourses;
+    const newTutorCourses = tutorCourses;
+
+    // Update user's tutorCourses
+    student.tutorCourses = newTutorCourses;
+    await student.save();
+
+    // Update tutors in Course model
+    const removedTutorCourses = oldTutorCourses.filter(course => !newTutorCourses.includes(course));
+    const addedTutorCourses = newTutorCourses.filter(course => !oldTutorCourses.includes(course));
+
+    // Remove the tutor from courses they are no longer tutoring
+    await Course.updateMany(
+      { _id: { $in: removedTutorCourses } },
+      { $pull: { tutors: student._id } }
+    );
+
+    // Add the tutor to new courses
+    await Course.updateMany(
+      { _id: { $in: addedTutorCourses } },
+      { $addToSet: { tutors: student._id } }
+    );
+
+    res.status(200).json({ message: 'Tutor courses updated successfully!' });
+  } catch (err) {
+    console.error('Error updating tutor courses:', err.message);
+    res.status(500).json({ message: 'Failed to update tutor courses.' });
+  }
+});
+
+
 
 // Fetch all users who are tutors (for dropdown)
 app.get('/api/tutors', async (req, res) => {

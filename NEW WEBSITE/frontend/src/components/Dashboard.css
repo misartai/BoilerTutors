@@ -26,7 +26,7 @@
 }
 
 .nav-container button {
-  width: 150px; /* Set a fixed width for all buttons */
+  width: 130px; /* Set a fixed width for all buttons */
   height: 50px; /* Set a fixed height for all buttons */
   padding: 0; /* Remove padding since height is fixed */
   background-color: #C4BB9B;
@@ -54,6 +54,35 @@
 .content {
   padding-top: 60px; /* Prevent content from being hidden behind the navbar */
   margin: 20px;
+}
+
+.course-bubbles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin-bottom: 20px;
+}
+
+.course-bubble {
+  padding: 5px 15px; /* Reduce padding for smaller buttons */
+  background-color: rgba(173, 134, 36, 0.771);;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 18px; /* Smaller text size */
+  max-width: 400px; /* Limit the button width */
+  height: 60px;
+  text-align: center; /* Center text within the button */
+  overflow: hidden; /* Hide overflow if text exceeds max-width */
+  text-overflow: ellipsis; /* Add ellipsis for overflowing text */
+  white-space: nowrap; /* Prevent text wrapping */
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.course-bubble:hover {
+  background-color: hwb(50 13% 21% / 0.771);
+  transform: scale(1.1);
 }
 
 button {

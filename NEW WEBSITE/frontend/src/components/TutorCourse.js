@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function AddCourse({ user, onReturn }) {
+function TutorCourse({ user, onReturn }) {
   const [allCourses, setAllCourses] = useState([]);
-  const [selectedCourses, setSelectedCourses] = useState(new Set(user.enrolledCourses)); // Pre-check existing courses
+  const [selectedCourses, setSelectedCourses] = useState(new Set(user.tutorCourses)); // Pre-check existing tutor courses
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -29,20 +29,20 @@ function AddCourse({ user, onReturn }) {
 
   const handleSubmit = async () => {
     try {
-      await axios.post(`http://localhost:5000/api/students/${user._id}/enrol`, {
-        enroledCourses: Array.from(selectedCourses), // Convert Set to Array
+      await axios.post(`http://localhost:5000/api/students/${user._id}/tutor`, {
+        tutorCourses: Array.from(selectedCourses), // Convert Set to Array
       });
-      alert('Courses updated successfully!');
+      alert('Tutor courses updated successfully!');
       onReturn(); // Go back to the dashboard
     } catch (err) {
-      console.error('Error updating courses:', err.message);
-      alert('Failed to update courses.');
+      console.error('Error updating tutor courses:', err.message);
+      alert('Failed to update tutor courses.');
     }
   };
 
   return (
     <div>
-      <h1>Add Courses</h1>
+      <h1>Tutor for Courses</h1>
       <ul>
         {allCourses.map((course) => (
           <li key={course._id}>
@@ -62,4 +62,4 @@ function AddCourse({ user, onReturn }) {
   );
 }
 
-export default AddCourse;
+export default TutorCourse;

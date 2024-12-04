@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MyCalendar from './CalendarDays'; // Import your CalendarDays component
 import ProfessorCalendar from './ProfessorCalendar';
+import DiscussionBoard from './DiscussionBoard';
+import Settings from './ProfileSettings';
 import Messaging from './Messaging';
 import RateTutor from './RateTutor'; // Import your RateTutor component
 import ReportAccount from './ReportAccount';
@@ -12,7 +14,7 @@ import ContactProf from './ContactProf'
 import logo from '../boilerTutorsLogo.png';
 import CreateCourse from './CreateCourse';
 import AddCourse from './AddCourse';
-import DiscussionBoard from './DiscussionBoard'; 
+import TutorCourse from './TutorCourse';
 
 
 import './Dashboard.css';
@@ -23,6 +25,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard'); // State to manage current page
   const [coursesNames, setCourseNames] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [tutoringCourses, setTutoringCourses] = useState([]);
   const navigate = useNavigate();
   let popUpTimeout, logoutTimeout;
 
@@ -32,8 +36,8 @@ function Dashboard() {
   };
 
   const startInactivityTimers = () => {
-    const threeHours = 5 * 1000; // 3 hours
-    const fourHours = 6 * 1000; // 4 hours
+    const threeHours = 3 * 60 * 60 * 1000; // 3 hours
+    const fourHours = 4 * 60 * 60 * 1000; // 4 hours
 
     // Pop-up timer
     popUpTimeout = setTimeout(() => {
@@ -74,11 +78,26 @@ function Dashboard() {
         setUser(fetchedUser);
 
         // Fetch courses if user is a professor
-        if (fetchedUser.accountType === 'professor') {
-          const courseResponse = await axios.get(`http://localhost:5000/api/courses`);
-          setCourseNames(courseResponse.data);
-          console.log('Courses fetched:', courseResponse.data);
+        console.log('Courses fetched error');
+        const courseResponse = await axios.get(`http://localhost:5000/api/courses`);
+        setCourseNames(courseResponse.data);
+
+        if (fetchedUser.accountType === 'student') {
+          const studentCourses = courseResponse.data.filter(course =>
+            fetchedUser.enrolledCourses.includes(course._id)
+          );
+          console.log('Courses enrolled:', studentCourses);
+          setEnrolledCourses(studentCourses);
         }
+        console.log('Courses fetched:', courseResponse.data);
+
+        if (fetchedUser.isTutor) {
+          const tutorCourses = courseResponse.data.filter(course =>
+            fetchedUser.tutorCourses.includes(course._id)
+          );
+          setTutoringCourses(tutorCourses);
+        }
+
       } catch (err) {
         console.error(err);
         setError('Failed to load user data: ' + err.message);
@@ -135,6 +154,10 @@ function Dashboard() {
         return user && <AddCourse user={user} onReturn={() => setCurrentPage('dashboard')} />;
       case 'discussionBoard':
         return <DiscussionBoard />; // Render the DiscussionBoard 
+      case 'tutorCourse':
+        return user && <TutorCourse user={user} onReturn={() => setCurrentPage('dashboard')} />;
+      case 'settings':
+        return user && <Settings />;
   
       case 'dashboard':
       default:
@@ -144,10 +167,10 @@ function Dashboard() {
             <p>Email: {user.email}</p>
             <h2>Courses:</h2>
             {user?.accountType === 'professor' && (
-              <div className="course-buttons">
+              <div className="course-bubbles">
                 {coursesNames.length > 0 ? (
                   coursesNames.map((course) => (
-                    <button key={course._id} onClick={() => handleCourseClick(course._id)}>
+                    <button key={course._id} className="course-bubble" onClick={() => handleCourseClick(course._id)}>
                     {course.courseName}
                     </button>
                   ))
@@ -156,6 +179,38 @@ function Dashboard() {
                 )}
               </div>
             )}
+            {user.accountType === 'student' && (
+        <>
+          <div className="course-bubbles">
+            {enrolledCourses.map(course => (
+              <button
+                key={course._id}
+                className="course-bubble"
+                onClick={() => handleCourseClick(course._id)}
+              >
+                {course.courseName}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {/* Tutoring Courses Section */}
+      {user.isTutor && tutoringCourses.length > 0 && (
+        <>
+          <h2>Tutoring Courses:</h2>
+          <div className="course-bubbles">
+            {tutoringCourses.map(course => (
+              <button
+                key={course._id}
+                className="course-bubble"
+                onClick={() => handleCourseClick(course._id)}
+              >
+                {course.courseName}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
           </div>
         );
     }
@@ -184,7 +239,8 @@ function Dashboard() {
           {user.accountType === 'student' && <button onClick={() => setCurrentPage('addCourse')}>Add Course</button>}
           {user.isTutor && <button onClick={() => setCurrentPage('payLedger')}>View Pay Ledger</button>}
           <button onClick={() => setCurrentPage('discussionBoard')}>Discussion Board</button>{' '}
-          <button onClick={() => navigate('/settings')}>Change Profile Settings</button>
+          <button onClick={() => setCurrentPage('settings')}>Change Profile Settings</button>
+          {user.isTutor && (<button onClick={() => setCurrentPage('tutorCourse')}>Tutor for Course</button>)}
           </div>
 
           <div className="nav-container-signOut">

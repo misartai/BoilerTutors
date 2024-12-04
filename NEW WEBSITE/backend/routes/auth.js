@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
+const Course = require('../models/Course')
 const Message = require('../models/Message');
 const Draft = require('../models/Draft');
 const router = express.Router();
