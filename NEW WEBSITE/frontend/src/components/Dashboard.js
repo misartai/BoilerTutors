@@ -233,12 +233,12 @@ function Dashboard() {
           <button onClick={() => setCurrentPage('messages')}>View Messages</button>
           <button onClick={() => setCurrentPage('contactProf')}>Contact A Professor</button>
           {user.isTutor && <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>}
-          {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report An Account</button>}
+          {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report Account</button>}
           {user.accountType === 'professor' && <button onClick={() => setCurrentPage('createCourse')}>Create Course</button>}
           {user.accountType === 'student' && <button onClick={() => setCurrentPage('addCourse')}>Add Course</button>}
           {user.isTutor && <button onClick={() => setCurrentPage('payLedger')}>View Pay Ledger</button>}
           <button onClick={() => setCurrentPage('discussionBoard')}>Discussion Board</button>{' '}
-          <button onClick={() => setCurrentPage('settings')}>Change Profile Settings</button>
+          <button onClick={() => setCurrentPage('settings')}>Profile Settings</button>
           {user.isTutor && (<button onClick={() => setCurrentPage('tutorCourse')}>Tutor for Course</button>)}
           </div>
 
