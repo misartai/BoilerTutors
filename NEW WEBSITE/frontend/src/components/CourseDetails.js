@@ -6,7 +6,6 @@ import './CourseDetails.css';
 function CourseDetails() {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
-  const [professorName, setProfessorName] = useState('');
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,9 +45,6 @@ function CourseDetails() {
     <div>
       {/* Course Name */}
       <h1>{course.courseName}</h1>
-
-      {/* Professor Name */}
-      <h2>Professor: {professorName || 'Not Assigned'}</h2>
 
       {/* Course Description */}
       <p>{course.courseDescription}</p>
