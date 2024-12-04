@@ -231,7 +231,6 @@ function Dashboard() {
           />
           <button onClick={() => setCurrentPage('calendar')}>View Calendar</button>
           <button onClick={() => setCurrentPage('messages')}>View Messages</button>
-          <button onClick={() => setCurrentPage('rateTutor')}>Rate A Tutor</button>
           <button onClick={() => setCurrentPage('contactProf')}>Contact A Professor</button>
           {user.isTutor && <button onClick={() => setCurrentPage('confirmPayment')}>Confirm Payment</button>}
           {user.isTutor && <button onClick={() => setCurrentPage('reportAccount')}>Report An Account</button>}
