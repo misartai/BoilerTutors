@@ -68,7 +68,7 @@ export default function Messages({ user }) {
         content: messageContent,
         createdAt: new Date().toISOString(),
         isAnnouncement: false,
-        read: false, // New property
+        read: false, 
       };
 
       setMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -157,13 +157,7 @@ export default function Messages({ user }) {
             ))}
           </div>
           <div className="message-pane">
-            <h3>Change View:</h3>
-            <center>
-              <select onChange={(e) => setView(e.target.value)} value={view}>
-                <option value="messages">Messages</option>
-                <option value="announcements">Announcements</option>
-              </select>
-            </center>
+
             <div className="message-list">
               {view === 'messages' ? (
                 selectedContact ? (
