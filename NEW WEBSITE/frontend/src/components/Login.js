@@ -32,6 +32,7 @@ function Login() {
   };
 
   return (
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
     <form onSubmit={handleLogin}>
       <h2>Login</h2>
       <input
@@ -53,6 +54,7 @@ function Login() {
       </p>
       <p>Don't have an account? <Link to="/signup">Sign-up here</Link></p>
     </form>
+    </div>
   );
 }
 

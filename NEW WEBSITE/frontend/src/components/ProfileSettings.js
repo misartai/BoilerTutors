@@ -133,6 +133,7 @@ function ProfileSettings() {
       <h2>Profile Settings</h2>
 
       {/* Update Name */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
       <form onSubmit={handleNameUpdate}>
         <h3>Update Name</h3>
         <input
@@ -198,6 +199,7 @@ function ProfileSettings() {
       {message && <p className="message">{message}</p>}
       {error && <p className="error">{error}</p>}
     </div>
+   </div>
   );
 }
 
