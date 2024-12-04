@@ -22,7 +22,6 @@
   align-items: center;
   gap: 10px; /* Space between buttons */
   float: left;
-  bottom-margin: 0px;
 }
 
 .nav-container button {
