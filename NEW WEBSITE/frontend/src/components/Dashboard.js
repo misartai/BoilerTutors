@@ -115,8 +115,6 @@ function Dashboard() {
   // Function to render the appropriate component based on the current page
   const renderContent = () => {
     switch (currentPage) {
-      case 'professorCalendar':
-        return user && <ProfessorCalendar user={user} />;
       case 'calendar':
         return user && <MyCalendar user={user} />; // Pass the user object to MyCalendar
       case 'messages':
@@ -177,7 +175,6 @@ function Dashboard() {
                onClick={() => setCurrentPage('dashboard')}
           />
           <button onClick={() => setCurrentPage('calendar')}>View Calendar</button>
-          <button onClick={() => setCurrentPage('professorCalendar')}>View Professor Calendar</button>
           <button onClick={() => setCurrentPage('messages')}>View Messages</button>
           <button onClick={() => setCurrentPage('rateTutor')}>Rate A Tutor</button>
           <button onClick={() => setCurrentPage('contactProf')}>Contact A Professor</button>
