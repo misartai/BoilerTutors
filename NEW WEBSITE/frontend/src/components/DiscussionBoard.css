@@ -1,101 +1,158 @@
-
 .web-name {
-    text-align: center;
-    font-family: Arial, sans-serif;
-    margin-top: 20px;
-  }
-  
-  .options {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  
-  .options input[type='text'] {
-    width: 200px;
-    padding: 5px;
-  }
-  
-  form {
-    margin: 20px 0;
-  }
-  
-  form h2 {
-    margin-bottom: 10px;
-  }
-  
-  form label {
-    display: block;
-    margin-bottom: 10px;
-  }
-  
-  form input,
-  form textarea {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-  }
-  
-  .post {
-    border: 1px solid #ccc;
-    padding: 15px;
-    margin-bottom: 10px;
-    background-color: #fff;
-  }
-  
-  .post h2 {
-    margin-top: 0;
-  }
-  
-  .post-actions {
-    margin-top: 10px;
-  }
-  
-  .post-actions button {
-    margin-right: 10px;
-  }
-  
-  .reply-form {
-    margin-top: 10px;
-  }
-  
-  .reply-form textarea {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-  }
-  
-  .reply-form button {
-    margin-top: 5px;
-  }
-  
-  .replies {
-    margin-top: 20px;
-    padding-left: 20px;
-    border-left: 2px solid #ccc;
-  }
-  
-  .reply {
-    margin-bottom: 10px;
-  }
-  
-  .content {
-    padding: 20px;
-    background-color: #f9f9f9;
-  }
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin-top: 20px;
+}
 
-  .post-actions button {
-    margin: 5px;
-    padding: 8px 12px;
-    cursor: pointer;
-    border: none;
-    background-color: #007bff;
-    color: white;
-    border-radius: 4px;
-  }
-  
-  .post-actions span {
-    margin: 0 10px;
-    font-weight: bold;
-  }
-  
+.options {
+  text-align: center; /* Center align all top buttons */
+  margin-bottom: 20px;
+}
+
+.options button {
+  display: inline-block; /* Align buttons inline */
+  margin: 0 10px; /* Add spacing between buttons */
+  padding: 8px 12px;
+  border: none;
+  background-color: #666;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  width: auto; /* Prevent buttons from stretching */
+}
+
+.options input[type="text"] {
+  width: 200px;
+  padding: 5px;
+  margin: 0 10px;
+}
+
+form {
+  margin: 20px auto;
+  max-width: 600px; /* Center align the form and restrict its width */
+  background-color: #f9f9f9;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+form h2 {
+  margin-bottom: 10px;
+  text-align: center; /* Center align form heading */
+}
+
+form label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+form input,
+form textarea {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  margin-bottom: 10px; /* Add spacing between form inputs */
+}
+
+form button {
+  display: inline-block; /* Ensure buttons are inline */
+  margin: 0 10px; /* Add spacing between buttons */
+  padding: 8px 12px;
+  border: none;
+  background-color: #666;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.post {
+  border: 1px solid #ccc;
+  padding: 15px;
+  margin-bottom: 10px;
+  background-color: #fff;
+}
+
+.post h2 {
+  margin-top: 0;
+}
+
+.post-actions {
+  text-align: center; /* Center align post action buttons */
+  margin-top: 10px;
+}
+
+.post-actions button {
+  display: inline-block; /* Prevent buttons from stretching */
+  margin: 0 4px 4px 0; /* Add spacing between buttons */
+  padding: 8px 12px;
+  border: none;
+  background-color: #666;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.post-actions {
+  text-align: center; /* Center align post action buttons */
+  margin-top: 10px;
+}
+
+.post-actions button {
+  display: inline-block; /* Prevent buttons from stretching */
+  margin: 5px; /* Add consistent spacing between buttons */
+  padding: 6px 12px; /* Adjust padding to make buttons more compact */
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100px; /* Manually set button width */
+  font-size: 13px; /* Slightly smaller font for post action buttons */
+  text-align: center;
+}
+
+.post-actions span {
+  margin: 0 10px;
+  font-weight: bold;
+}
+
+.reply-form {
+  margin-top: 10px;
+  text-align: center; /* Center align the reply form */
+}
+
+.reply-form textarea {
+  width: 90%;
+  padding: 8px;
+  box-sizing: border-box;
+  margin: 10px auto; /* Center align textarea */
+  display: block;
+}
+
+.reply-form button {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 6px 12px; /* Adjust padding */
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 120px; /* Manually set button width */
+  font-size: 14px; /* Consistent font size */
+}
+
+.replies {
+  margin-top: 20px;
+  padding-left: 20px;
+  border-left: 2px solid #ccc;
+}
+
+.reply {
+  margin-bottom: 10px;
+}
+
+.content {
+  padding: 20px;
+  background-color: #f9f9f9;
+}

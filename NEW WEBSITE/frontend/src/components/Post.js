@@ -68,8 +68,8 @@ const Post = ({
             <div>
               <p>{post.content}</p>
               <p>
-                <strong>Author:</strong> {post.author?.name || 'Unknown'} (
-                {post.author?.accountType || 'Unknown Role'})
+                <strong>Author:</strong> {post.author?.name || 'Shivli'} (
+                {post.author?.accountType || 'Student'})
               </p>
               <p>
                 <strong>Visibility:</strong>{' '}
@@ -110,7 +110,7 @@ const Post = ({
                   {post.replies.map((reply, index) => (
                     <div key={index} className="reply">
                       <p>
-                        <strong>{reply.author?.name || 'Anonymous'}:</strong>{' '}
+                        <strong>{reply.author?.name || 'Shivli'}:</strong>{' '}
                         {reply.content}
                       </p>
                     </div>

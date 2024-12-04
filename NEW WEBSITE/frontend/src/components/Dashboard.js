@@ -32,8 +32,8 @@ function Dashboard() {
   };
 
   const startInactivityTimers = () => {
-    const threeHours = 5 * 1000; // 3 hours
-    const fourHours = 6 * 1000; // 4 hours
+    const threeHours = 3 * 6 * 6 * 1000; // 3 hours
+    const fourHours = 4 * 6 * 6 * 1000; // 4 hours
 
     // Pop-up timer
     popUpTimeout = setTimeout(() => {

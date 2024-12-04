@@ -53,28 +53,32 @@ const DiscussionBoard = () => {
     fetchPostsAndUser();
   }, []);
 
-  // Create Post
   const handleCreatePost = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(
-        'http://localhost:5000/api/postRoutes/create',
-        {
-          title: newPostTitle,
-          content: newPostContent,
-          visibility: newPostVisibility, // Include visibility
-        },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
-      setPosts([...posts, response.data]);
-      setNewPostTitle('');
-      setNewPostContent('');
-      setNewPostVisibility('everyone'); // Reset to default if desired
-      setShowCreatePost(false);
-    } catch (error) {
-      console.error('Error creating post:', error);
-    }
-  };
+  e.preventDefault();
+  try {
+    const response = await axios.post(
+      'http://localhost:5000/api/postRoutes/create',
+      {
+        title: newPostTitle,
+        content: newPostContent,
+        visibility: newPostVisibility, // Include visibility
+      },
+      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+    );
+
+    // Use the populated post from the backend response
+    setPosts([...posts, response.data]);
+
+    // Reset the form
+    setNewPostTitle('');
+    setNewPostContent('');
+    setNewPostVisibility('everyone');
+    setShowCreatePost(false);
+  } catch (error) {
+    console.error('Error creating post:', error);
+  }
+};
+
 
   // Delete Post
   const handleDeletePost = async (postId) => {
@@ -203,7 +207,7 @@ const DiscussionBoard = () => {
           {showFavorites ? 'View All Posts' : 'View Favorites'}
         </button>
         <button onClick={() => setShowUnvisited(!showUnvisited)}>
-          {showUnvisited ? 'View All Posts' : 'View Unvisited Posts'}
+          {showUnvisited ? 'View All Posts' : 'View Unopened Posts'}
         </button>
         <input
           type="text"
