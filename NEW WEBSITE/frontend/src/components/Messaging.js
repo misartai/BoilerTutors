@@ -54,43 +54,27 @@ export default function Messages({ user }) {
     fetchAnnouncements();
   }, []);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleSendMessage = (e) => {
+      e.preventDefault();
 
-    if (!messageContent || !selectedContact) {
-      alert("Please enter a message and select a recipient.");
-      return;
-    }
-
-    const newMessage = {
-      senderEmail: userEmail,
-      recipientEmail: selectedContact,
-      content: messageContent,
-      createdAt: new Date().toISOString(), // Use createdAt instead of timestamp
-      isAnnouncement: false, // Explicitly mark this as a normal message
-    };
-
-    try {
-      const response = await fetch("http://localhost:5000/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newMessage),
-      });
-
-      if (response.ok) {
-        const savedMessage = await response.json();
-        setMessages((prevMessages) => [...prevMessages, savedMessage]);
-        setMessageContent('');
-      } else {
-        alert("Failed to send message");
+      if (!messageContent || !selectedContact) {
+        alert('Please enter a message and select a recipient.');
+        return;
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
 
+      const newMessage = {
+        senderEmail: userEmail,
+        recipientEmail: selectedContact,
+        content: messageContent,
+        createdAt: new Date().toISOString(),
+        isAnnouncement: false,
+        read: false, // New property
+      };
+
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      setFilteredMessages((prevMessages) => [...prevMessages, newMessage]);
+      setMessageContent('');
+    };
 
   const handleSendAnnouncement = async (e) => {
     e.preventDefault();
@@ -127,92 +111,104 @@ export default function Messages({ user }) {
   };
 
   const filterMessages = (contactEmail) => {
-    const filtered = messages.filter(
-      (message) =>
-        (message.senderEmail === userEmail && message.recipientEmail === contactEmail) ||
-        (message.senderEmail === contactEmail && message.recipientEmail === userEmail)
-    );
-    setFilteredMessages(filtered);
-  };
+      const updatedMessages = messages.map((message) =>
+        (message.senderEmail === contactEmail || message.recipientEmail === contactEmail) && !message.read
+          ? { ...message, read: true }
+          : message
+      );
+      setMessages(updatedMessages);
+
+      const filtered = updatedMessages.filter(
+        (message) =>
+          (message.senderEmail === userEmail && message.recipientEmail === contactEmail) ||
+          (message.senderEmail === contactEmail && message.recipientEmail === userEmail)
+      );
+      setFilteredMessages(filtered);
+    };
 
   const handleSelectContact = (contactEmail) => {
     setSelectedContact(contactEmail);
     filterMessages(contactEmail);
   };
 
-  return (
-    <div className="messages-main">
-      {user.accountType === 'professor' && (
-        <form className="announcement-form" onSubmit={handleSendAnnouncement}>
-          <input
-            type="text"
-            placeholder="Type an announcement here..."
-            value={announcementContent}
-            onChange={(e) => setAnnouncementContent(e.target.value)}
-          />
-          <button type="submit">Send Announcement</button>
-        </form>
-      )}
-      <div className="recipients-pane">
-        <h3>Contacts</h3>
-        {contacts.map((contact) => (
-          <div
-            key={contact.email}
-            className={`contact-item ${selectedContact === contact.email ? 'active' : ''}`}
-            onClick={() => handleSelectContact(contact.email)}
-          >
-            {contact.name} ({contact.email})
-          </div>
-        ))}
-      </div>
-      <div className="message-pane">
-        <h3>Change View:</h3>
-          <center>
-              <select onChange={(e) => setView(e.target.value)} value={view}>
-              <option value="messages">Messages</option>
-              <option value="announcements">Announcements</option>
-              </select>
-          </center>
-        <div className="message-list">
-          {view === 'messages' ? (
-            selectedContact ? (
-              filteredMessages.length > 0 ? (
-                filteredMessages.map((msg, idx) => (
-                  <div key={idx} className="message-item">
-                    <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
-                    <div className="timestamp">{new Date(msg.createdAt).toLocaleString()}</div>
-                  </div>
-                ))
-              ) : (
-                <p>No Messages Found</p>
-              )
-            ) : (
-              <p>Select a contact to view messages</p>
-            )
-          ) : (
-            announcements.length > 0 ? (
-              announcements.map((ann, idx) => (
-                <div key={idx} className="announcement-item">
-                  <strong>Announcement:</strong> {ann.content}
-                </div>
-              ))
-            ) : (
-              <p>No Announcements Found</p>
-            )
+    return (
+        <div className="messages-main">
+          {user.accountType === 'professor' && (
+            <form className="announcement-form" onSubmit={handleSendAnnouncement}>
+              <input
+                type="text"
+                placeholder="Type an announcement here..."
+                value={announcementContent}
+                onChange={(e) => setAnnouncementContent(e.target.value)}
+              />
+              <button type="submit">Send Announcement</button>
+            </form>
           )}
+          <div className="recipients-pane">
+            <h3>Contacts</h3>
+            {contacts.map((contact) => (
+              <div
+                key={contact.email}
+                className={`contact-item ${selectedContact === contact.email ? 'active' : ''}`}
+                onClick={() => handleSelectContact(contact.email)}
+              >
+                {contact.name} ({contact.email})
+              </div>
+            ))}
+          </div>
+          <div className="message-pane">
+            <h3>Change View:</h3>
+            <center>
+              <select onChange={(e) => setView(e.target.value)} value={view}>
+                <option value="messages">Messages</option>
+                <option value="announcements">Announcements</option>
+              </select>
+            </center>
+            <div className="message-list">
+              {view === 'messages' ? (
+                selectedContact ? (
+                  filteredMessages.length > 0 ? (
+                    filteredMessages.map((msg, idx) => (
+                      <div key={idx} className="message-item">
+                        <strong>{msg.senderEmail === userEmail ? 'You' : msg.senderEmail}:</strong> {msg.content}
+                        <div className="timestamp">
+                          {new Date(msg.createdAt).toLocaleString()} -{' '}
+                          <span className={msg.read ? 'read-status' : 'unread-status'}>
+                            {msg.read ? 'Read' : 'Unread'}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No Messages Found</p>
+                  )
+                ) : (
+                  <p>Select a contact to view messages</p>
+                )
+              ) : (
+                announcements.length > 0 ? (
+                  announcements.map((ann, idx) => (
+                    <div key={idx} className="announcement-item">
+                      <strong>Announcement:</strong> {ann.content}
+                    </div>
+                  ))
+                ) : (
+                  <p>No Announcements Found</p>
+                )
+              )}
+            </div>
+            {view === 'messages' && (
+              <form className="send-message-form" onSubmit={handleSendMessage}>
+                <input
+                  type="text"
+                  placeholder="Type a message here..."
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                />
+                <button type="submit">Send</button>
+              </form>
+            )}
+          </div>
         </div>
-        {view === 'messages' && (
-          <form className="send-message-form" onSubmit={handleSendMessage}>
-            <input
-              type="text"
-              placeholder="Type a message here..."
-              value={messageContent}
-              onChange={(e) => setMessageContent(e.target.value)}
-            />
-            <button type="submit">Send</button>
-          </form>
-        )}
-      </div>
-    </div>
-  );
-}
+      );
+    }
