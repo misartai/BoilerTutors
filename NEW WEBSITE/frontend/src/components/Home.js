@@ -25,9 +25,9 @@ function Home() {
             <p>Schedule and manage your tutoring sessions effortlessly.</p>
           </div>
           <div className="feature-card">
-            <div className="feature-icon">⭐</div>
-            <h3>Rate Your Tutor</h3>
-            <p>Provide feedback and reviews to enhance your learning experience.</p>
+            <div className="feature-icon">📝</div>
+            <h3>Courses</h3>
+            <p>Join course and get access to all course material.</p>
           </div>
           <div className="feature-card">
             <div className="feature-icon">💬</div>

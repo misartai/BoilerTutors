@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import CourseDetails from './components/CourseDetails';
+import DiscussionBoard from './components/DiscussionBoard';
 import Home from './components/Home';
 import Signup from './components/Signup';
 import Login from './components/Login';
@@ -13,11 +15,7 @@ import ConfirmPayment from './components/ConfirmPayment';
 import ReportAccount from './components/ReportAccount';
 import PayLedger from './components/PayLedger';
 import ProtectedRoute from './components/Protectedroute';
-import ProfileSettings from './components/ProfileSettings';
 import Messaging from './components/Messaging';
-import CourseDetails from './components/CourseDetails';
-import DiscussionBoard from './components/DiscussionBoard'; // Import the DiscussionBoard component
-
 
 
 function App() {
@@ -48,7 +46,6 @@ function App() {
           </ProtectedRoute>
           } 
         />
-        <Route path="/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
         <Route path="/messaging" element={
             <ProtectedRoute>
               <Messaging />

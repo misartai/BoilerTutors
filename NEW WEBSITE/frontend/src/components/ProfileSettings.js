@@ -186,14 +186,9 @@ function ProfileSettings() {
           Enable Tutor Mode
         </label>
         <button onClick={handleSubmitTutor} style={{ marginLeft: '10px' }}>
-          Submit
+          Save
         </button>
       </div>
-
-      {/* Go Back to Dashboard Button */}
-      <button onClick={handleBackToDashboard} style={{ marginTop: '20px', display: 'block' }}>
-        Back to Dashboard
-      </button>
 
       {/* Delete Account Button */}
       <button onClick={handleDeleteAccount} style={{ color: 'red', marginTop: '20px' }}>
