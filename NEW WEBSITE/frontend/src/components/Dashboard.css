@@ -58,29 +58,29 @@
 .course-bubbles {
   display: flex;
   flex-wrap: wrap;
-  gap: 40px;
-  margin-bottom: 20px;
+  gap: 30px;
+  margin-bottom: 30px;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .course-bubble {
-  padding: 5px 15px; /* Reduce padding for smaller buttons */
+  padding: 20px 30px; /* Reduce padding for smaller buttons */
   background-color: rgba(173, 134, 36, 0.771);;
   color: white;
   border: none;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 18px; /* Smaller text size */
-  max-width: 400px; /* Limit the button width */
+  font-size: 24px; /* Smaller text size */
+  min-width: 400px;
+  max-width: 500px; /* Limit the button width */
   height: 60px;
   text-align: center; /* Center text within the button */
   overflow: hidden; /* Hide overflow if text exceeds max-width */
   text-overflow: ellipsis; /* Add ellipsis for overflowing text */
   white-space: nowrap; /* Prevent text wrapping */
   transition: transform 0.2s ease, background-color 0.2s ease;
-  float: center;
 }
 
 .course-bubble:hover {
