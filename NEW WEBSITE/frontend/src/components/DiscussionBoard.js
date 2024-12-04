@@ -153,22 +153,18 @@ const DiscussionBoard = () => {
 
   const handleToggleFavorite = async (postId) => {
     try {
-      const isFavorited = currentUserFavorites.includes(postId);
-      if (isFavorited) {
-        // Remove from favorites
-        await axios.delete(`http://localhost:5000/api/postRoutes/${postId}/favourite`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        setCurrentUserFavorites(currentUserFavorites.filter((id) => id !== postId));
-      } else {
-        // Add to favorites
-        await axios.post(
-          `http://localhost:5000/api/auth/favorites/${postId}`,
-          {},
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-        );
-        setCurrentUserFavorites([...currentUserFavorites, postId]);
-      }
+      const response = await axios.put(
+        `http://localhost:5000/api/postRoutes/${postId}/favourite`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+  
+      // Update the local favorite state
+      const updatedFavorites = response.data.isFavourite
+        ? [...currentUserFavorites, postId]
+        : currentUserFavorites.filter((id) => id !== postId);
+  
+      setCurrentUserFavorites(updatedFavorites);
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
